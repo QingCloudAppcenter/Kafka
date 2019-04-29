@@ -1,0 +1,108 @@
+---
+- hosts: server
+  remote_user: root
+  become: yes
+  vars:
+    kafkaManagerVersion: 2.0.0.2 #latest
+    kafkaMetricsVersion: 0.5.3
+    kafkaVersion: 2.2.0
+    scalaVersion: "2.12"
+
+  tasks:
+    #- name: set up confd
+     # include_tasks: setup-confd.yml
+
+    - name: copy binaries
+      copy: #拷贝service文件
+        src: files/{{ item }}
+        dest: /{{ item }}
+        directory_mode: yes
+      with_items:
+        - etc/systemd/system/
+        - opt/
+
+    - name: add the service group
+      group:
+        name: kafka
+        state: present
+
+    - name: add the service user
+      user:
+        name: kafka
+        groups: kafka
+        shell: /sbin/nologin
+        create_home: no
+        home: "/opt/kafka/current"
+        append: yes
+        comment: "Service User"
+        state: present
+
+    - name: install tools
+      apt:
+        update_cache: yes
+        name: ['openjdk-8-jre', 'unzip', 'default-jdk']
+        state: present
+    
+    - name: prepare service directories
+      file:
+        path: /opt/{{ item }}
+        owner: kafka
+        group: kafka
+        state: directory
+      with_items:
+        - kafka/{{ kafkaVersion }}
+        - kafka-manager/{{ kafkaManagerVersion }}
+
+    - name: create symbolic links
+      file:
+        src: /opt/{{ item.name }}/{{ item.version }}
+        dest: /opt/{{ item.name }}/current
+        owner: kafka
+        group: kafka
+        state: link
+      with_items:
+        - name: kafka
+          version: "{{ kafkaVersion }}"
+        - name: kafka-manager
+          version: "{{ kafkaManagerVersion }}"
+
+    - name: install kafka
+      unarchive:
+        src: https://archive.apache.org/dist/kafka/{{ kafkaVersion }}/kafka_{{ scalaVersion }}-{{ kafkaVersion }}.tgz
+        dest: /opt/kafka/{{ kafkaVersion }}
+        owner: kafka
+        group: kafka
+        creates: /opt/kafka/{{ kafkaVersion }}/bin/kafka-server-start.sh
+        extra_opts: [ '--strip-components=1' ]
+        remote_src: yes
+
+    - name: install kafka statsd metrics
+      get_url:
+        url: https://dl.bintray.com/airbnb/jars/com/airbnb/kafka-statsd-metrics2/{{ kafkaMetricsVersion }}/kafka-statsd-metrics2-{{ kafkaMetricsVersion }}.jar
+        dest: /opt/kafka/{{ kafkaVersion }}/libs
+        owner: kafka
+        group: kafka
+        remote_src: yes
+
+    - name: prepare kafka manager directory
+      file:
+        path: files/tmp/kafka-manager-{{ kafkaManagerVersion }}
+        state: directory
+      delegate_to: localhost
+
+    - name: download kafka manager src without build
+      unarchive:
+        src: https://github.com/yahoo/kafka-manager/archive/{{ kafkaManagerVersion }}.tar.gz
+        dest: /opt/kafka-manager
+        owner: kafka
+        group: kafka
+        extra_opts: [ '--strip-components=1' ]
+        remote_src: yes
+        #creates: /opt/kafka-manager/{{ kafkaManagerVersion }}
+
+    - name: clean up
+      shell: |
+        >/var/log/syslog
+        >~/.bash_history && history -c
+      args:
+        executable: /bin/bash

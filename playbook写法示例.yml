@@ -1,0 +1,97 @@
+--- #默认写法，即表示剧本的开始 注意剧本全靠缩进来区分代码块。类似与python,空格和tab不能混用
+#剧本若涉及敏感信息，可以使用ansible-vault模块加密，使用时也需要先解密
+- hosts: host_name:group_naame #表示远程主机组名，具体见hosts文件,注意第一个横线之后的一个空格
+  remote_user: root #远程主机的用户
+
+  tasks:
+    - name: task1 #注意空格，该句表示任务名
+      file: name=/data/newfile state=touch #表示使用file模块创建一个新文件
+    - name: task2
+      copy: src=/data/file dest=/data/oringinalfile
+    - name: start service
+      service: name=service_name state=started enabled=yes #enable=yes表示设置为开机启动
+      #有时候希望即使某条命令发生错误也希望继续执行，则有以下两种方式
+    - name: ignore_error_1
+      shell: /usr/bin/somecommand ||/bin/true #表示强制返回true，即可忽略错误继续执行
+    - name: ignore_error_2
+      shell: /usr/bin/somecommand
+      ignore_errors: True #接上忽略错误参数也可忽略错误继续执行
+    
+...
+
+
+    #Handlers 是task列表，这些task与前述的task并没有本质上的不同，用于当关注的资源发生变化时，才采取一定的操作
+    #Notify此action可用于在每个play的最后被触发，这样可避免有改变发生时每次都执行指定的操作，仅在所有的变化发生完成后一次性的执行指定操作
+    #在notify中列出的操作称为handler，也即notify中调用handler中定义的操作
+#playbook2
+#情景：在配置文件发生修改后，虽然再次执行playbook会重新复制新的配置文件到指定目录
+#      但由于服务已经在配置文件修改之前启动，再次运行playbook并不会重新启动服务
+#      因为服务启动之后，ansible则认为执行成功，将不再重启服务，
+#      针对上述情形，将配合Handler&Notify来执行特定操作
+---
+- hosts: host_name
+  remote_user: root
+
+  tasks:
+    - name: install package
+      yum: name=httpd
+    - name: copy the conf file
+      copy: src=files/httpd.conf dest=/etc/httpd/conf backup=yes
+      notify: restart service #锚点，若此步发生变化，则触发handler的服务  需与handler里的name一致
+    - name: start service
+      service: name=httpd state=started enabled=yes
+
+  #如果不加以下的内容，上面的写法将出现描述的场景
+  handlers: #与tasks平齐
+    - name: restart service
+      service: name=httpd state=restarted
+...
+
+
+
+
+#playbook3
+#tags
+---
+- hosts: host_name
+  remote_user: root
+
+  tasks:
+    - name: install package
+      yum: name=httpd
+      tags: install_httpd #可以重名
+    - name: copy the conf file
+      copy: src=files/httpd.conf dest=/etc/httpd/conf backup=yes
+      notify: restart service #锚点，若此步发生变化，则触发handler的服务  需与handler里的name一致
+    - name: start service
+      service: name=httpd state=started enabled=yes
+      tags: restart_httpd
+
+  #如果不加以下的内容，上面的写法将出现描述的场景
+  handlers: #与tasks平齐
+    - name: restart service
+      service: name=httpd state=restarted
+...
+
+#加上tags后，则可以在命令行特定的指定某个标签指定的内容
+#命令：  ansible-playbook -t tags的名字  剧本的名字
+
+
+#playbook4
+#自定义变量名
+---
+- hosts: host_name
+  remote_user: root
+  vars: 
+    - 变量名1: 值1
+    - 变量名2: 值2 #即可指定剧本中定义的变量名的值，也可进行实时传参
+
+  tasks:
+    - name: copy binaries
+      copy:
+        src: files/{{ item }} #item则为自定义的变量名，其左右的空格可不写 可在命令行模式下进行传值操作
+        dest: /{{ item }}
+        directory_mode: yes
+      with_items:
+        - etc/systemd/system/
+        - opt/

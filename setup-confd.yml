@@ -1,0 +1,66 @@
+---
+- hosts: server
+  remote_user: root
+  sudo: yes
+
+  tasks: 
+    - name: Prepare directories
+      file:
+        path: "/tmp/app-agent"
+        state: directory
+
+    - name: Download reusable binaries locally
+      get_url:
+        #url: "https://github.com/QingCloudAppcenter/AppcenterAgent/releases/download/{{ appAgentVersion }}/app-agent-linux-amd64.tar.gz"
+        url: "http://appcenter-docs.qingcloud.com/developer-guide/scripts/app-agent-linux-amd64.tar.gz#_ga=2.263515020.1028025754.1555897810-1110897033.1554972558"
+        dest: "/tmp/app-agent-linux-amd64.tar.gz"
+      delegate_to: localhost
+
+    - name: Extract binary
+      unarchive:
+        src: "/tmp/app-agent-linux-amd64.tar.gz"
+        dest: "/tmp/app-agent"
+        creates: "/tmp/app-agent/bin"
+        extra_opts: [ --strip-components=1 ]
+
+    - name: Create symbolic Link
+      shell: sh ./install.sh
+      args: 
+        chdir: /tmp/app-agent/
+        #executable: /bin/bash
+      #raw: |
+       # cd /tmp/app-agent
+        #./install.sh
+    
+    - name: Copy confd toml files
+      copy:
+        src: "./files/etc/confd/conf.d/make.sh.toml"
+        dest: "/etc/confd/conf.d/make.sh.toml"
+        owner: root
+        group: root
+        directory_mode: yes
+        mode: 755
+
+    - name: Compile tmpl files
+      shell: |
+        srcDir="./files/etc/confd/templates"
+        srcFiles="$(ls $srcDir/*.tmpl)"
+        destDir="files/tmp/confd/templates"
+        rm -rf $destDir
+        mkdir -p $destDir
+        tmplFile=$destDir/make.sh.tmpl
+        for tmpl in $srcFiles; do
+          cat $tmpl >> $tmplFile
+          echo >> $tmplFile
+        done
+      args:
+        executable: /bin/bash
+      delegate_to: localhost
+
+    - name: Copy confd tmpl files
+      copy:
+        src: files/tmp/confd/templates/make.sh.tmpl
+        dest: /etc/confd/templates/make.sh.tmpl
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
