@@ -81,9 +81,9 @@ checkActive() {
 checkEndpoint() {
   local host=$MY_IP proto=${1%:*} port=${1#*:}
   case $proto in
-  	tcp) nc -z -w5 $host $port ;;
+  tcp) nc -z -w5 $host $port ;;
 	udp) nc -z -u -q5 -w5 $host $port ;;
-	http) local code="$(curl -s -o /dev/null -w "%{http_code}" $host:$port)"; [[ "$code" =~ ^(200|302|401|403|404)$ ]];;
+	http) local code="$(curl -s -o /dev/null -w "%{http_code}" $host:$port)"; [[ "$code" =~ ^(200|302|401|403|404)$ ]] && checkKafkaManager;;
 	*) return $EC_CHECK_PROTO_ERR
   esac
 }

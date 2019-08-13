@@ -77,3 +77,8 @@ parseMetrics() {
   [ -z "$3" ] || factor="*$3"
   echo "$metrics" | xargs -n1 | awk -F: 'BEGIN{value=""} $1=="'$key'"{value=$2} END{print (value=="" ? 0 : value'$factor')}'
 }
+
+checkKafkaManager() {
+  . /opt/app/bin/envs/appctl.env
+  curl $MY_IP:$MY_PORT | grep $CLUSTER_ID >> /dev/null
+}
