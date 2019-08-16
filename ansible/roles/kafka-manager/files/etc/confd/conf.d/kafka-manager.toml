@@ -5,4 +5,4 @@ mode = "0600"
 keys = [
   "/",
 ]
-reload_cmd = "appctl update kafka-manager"
+reload_cmd = "/opt/app/bin/tmpl/kafka-manager.sh;appctl update kafka-manager; appctl updateCluster"
