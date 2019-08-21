@@ -18,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-ohywwigt"
+      "image": "img-gdt7jyex"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -31,15 +31,15 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl  start",
+        "cmd": "appctl start",
         "order": 1
       },
       "stop": {
-        "cmd": "appctl  stop",
+        "cmd": "appctl stop",
         "order": 2
       },
       "restart": {
-        "cmd": "appctl  restart"
+        "cmd": "appctl restart"
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -99,7 +99,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-ohywwigt"
+      "image": "img-gdt7jyex"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -112,15 +112,15 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl  start",
+        "cmd": "appctl start",
         "order": 2
       },
       "stop": {
-        "cmd": "appctl  stop",
+        "cmd": "appctl stop",
         "order": 1
       },
       "restart": {
-        "cmd": "appctl  restart"
+        "cmd": "appctl restart"
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -131,7 +131,7 @@
       "action_timeout_sec": 30,
       "healthy_threshold": 2,
       "unhealthy_threshold": 2,
-      "check_cmd": "appctl  check",
+      "check_cmd": "appctl check",
       "action_cmd": "appctl revive"
     }
   }],

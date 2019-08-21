@@ -5,4 +5,4 @@ mode = "0600"
 keys = [
   "/",
 ]
-reload_cmd = "appctl flush appctl"
+reload_cmd = "/opt/app/bin/tmpl/appctl.sh; /opt/app/bin/ctl.sh update"

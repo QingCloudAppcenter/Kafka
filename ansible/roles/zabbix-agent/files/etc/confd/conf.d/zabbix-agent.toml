@@ -5,4 +5,4 @@ mode = "0600"
 keys = [
   "/",
 ]
-reload_cmd = "appctl update zabbix-agent"
+reload_cmd = "/opt/app/bin/tmpl/zabbix-agent.sh; /opt/app/bin/ctl.sh update zabbix-agent"

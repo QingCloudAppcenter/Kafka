@@ -5,4 +5,4 @@ mode = "0600"
 keys = [
   "/",
 ]
-reload_cmd = "appctl flush caddy"
+reload_cmd = "/opt/app/bin/tmpl/caddy.sh"
