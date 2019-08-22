@@ -16,13 +16,20 @@ start() {
   _start
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
-    httpCode="$(retry 10 2 0 clusterAct add)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'."
+    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'."
+  fi
+}
+
+update() {
+  _update $@
+  if [ "$MY_ROLE" == "kafka-manager" ]; then
+    addCluster; updateCluster
   fi
 }
 
 check() {
   _check
-  if [ "$MY_ROLE" = "kafka-manager" ] && $(curl http://metadata/self | grep kafka -q); then
+  if [ "$MY_ROLE" = "kafka-manager" ] && [ "$KAFKA_NUM" -gt "0" ]; then
     checkKafkaManager
   fi
 }
@@ -52,47 +59,54 @@ parseMetrics() {
 
 checkKafkaManager() {
   . /opt/app/bin/envs/appctl.env
-  curl $MY_IP:$MY_PORT | grep $CLUSTER_ID -q
+  curl "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
 }
 
-clusterAct() {
-  . /opt/app/bin/envs/version.env
-  if [ "$1" = "add" ]; then
-    ACT=""
-    URL="http://$MY_IP:$MY_PORT/clusters"
-  elif [ "$1" = "update" ]; then
-    ACT="operation=Update"
-    URL="http://$MY_IP:$MY_PORT/clusters/$CLUSTER_ID"
+addCluster() {
+  request "$(buildParams)" "http://$MY_IP:$MY_PORT/clusters"
+}
+
+updateCluster() {
+  request "$(buildParams --update)" "http://$MY_IP:$MY_PORT/clusters/$CLUSTER_ID"
+}
+
+request() {
+  curl -s -m5 -w '%{http_code}' -o /dev/null -u "$WEB_USER:$WEB_PASSWORD" $1 $2
+}
+
+
+buildParams() {
+  local params="
+  name=$CLUSTER_ID
+  zkHosts=$ZK_HOSTS
+  kafkaVersion=$KAFKA_VERSION
+  jmxEnabled=true
+  jmxUser=""
+  jmxPass=""
+  tuning.brokerViewUpdatePeriodSeconds=30
+  tuning.clusterManagerThreadPoolSize=2
+  tuning.clusterManagerThreadPoolQueueSize=100
+  tuning.kafkaCommandThreadPoolSize=2
+  tuning.kafkaCommandThreadPoolQueueSize=100
+  tuning.logkafkaCommandThreadPoolSize=2
+  tuning.logkafkaCommandThreadPoolQueueSize=100
+  tuning.logkafkaUpdatePeriodSeconds=30
+  tuning.partitionOffsetCacheTimeoutSecs=5
+  tuning.brokerViewThreadPoolSize=2
+  tuning.brokerViewThreadPoolQueueSize=1000
+  tuning.offsetCacheThreadPoolSize=2
+  tuning.offsetCacheThreadPoolQueueSize=1000
+  tuning.kafkaAdminClientThreadPoolSize=2
+  tuning.kafkaAdminClientThreadPoolQueueSize=1000
+  tuning.kafkaManagedOffsetMetadataCheckMillis=30000
+  tuning.kafkaManagedOffsetGroupCacheSize=1000000
+  tuning.kafkaManagedOffsetGroupExpireDays=7
+  securityProtocol=PLAINTEXT
+  saslMechanism=DEFAULT
+  jaasConfig=""
+  "
+  if [ "$1" == "--update" ]; then
+    params="operation=Update $params"
   fi
-  curl -s -m5 -w "%{http_code}" -o /dev/null \
-  -u "$WEB_USER:$WEB_PASSWORD" \
-  --data-urlencode "$ACT" \
-  --data-urlencode "name=$CLUSTER_ID" \
-  --data-urlencode "zkHosts=$ZK_HOSTS" \
-  --data-urlencode "kafkaVersion=$KAFKA_VERSION" \
-  --data-urlencode "jmxEnabled=true" \
-  --data-urlencode "jmxUser=" \
-  --data-urlencode "jmxPass=" \
-  --data-urlencode "tuning.brokerViewUpdatePeriodSeconds=30" \
-  --data-urlencode "tuning.clusterManagerThreadPoolSize=2" \
-  --data-urlencode "tuning.clusterManagerThreadPoolQueueSize=100" \
-  --data-urlencode "tuning.kafkaCommandThreadPoolSize=2" \
-  --data-urlencode "tuning.kafkaCommandThreadPoolQueueSize=100" \
-  --data-urlencode "tuning.logkafkaCommandThreadPoolSize=2" \
-  --data-urlencode "tuning.logkafkaCommandThreadPoolQueueSize=100" \
-  --data-urlencode "tuning.logkafkaUpdatePeriodSeconds=30" \
-  --data-urlencode "tuning.partitionOffsetCacheTimeoutSecs=5" \
-  --data-urlencode "tuning.brokerViewThreadPoolSize=2" \
-  --data-urlencode "tuning.brokerViewThreadPoolQueueSize=1000" \
-  --data-urlencode "tuning.offsetCacheThreadPoolSize=2" \
-  --data-urlencode "tuning.offsetCacheThreadPoolQueueSize=1000" \
-  --data-urlencode "tuning.kafkaAdminClientThreadPoolSize=2" \
-  --data-urlencode "tuning.kafkaAdminClientThreadPoolQueueSize=1000" \
-  --data-urlencode "tuning.kafkaManagedOffsetMetadataCheckMillis=30000" \
-  --data-urlencode "tuning.kafkaManagedOffsetGroupCacheSize=1000000" \
-  --data-urlencode "tuning.kafkaManagedOffsetGroupExpireDays=7" \
-  --data-urlencode "securityProtocol=PLAINTEXT" \
-  --data-urlencode "saslMechanism=DEFAULT" \
-  --data-urlencode "jaasConfig=" \
-  "$URL"
+  local p; for p in $params; do echo -n "--data-urlencode $p "; done
 }
