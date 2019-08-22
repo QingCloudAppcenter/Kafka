@@ -29,7 +29,7 @@ update() {
 
 check() {
   _check
-  if [ "$MY_ROLE" = "kafka-manager" ] && [ "$KAFKA_NUM" -gt "0" ]; then
+  if [ "$MY_ROLE" = "kafka-manager" ]; then
     checkKafkaManager
   fi
 }
