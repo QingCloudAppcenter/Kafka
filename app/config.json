@@ -2,7 +2,7 @@
     "type": "array",
     "properties": [{
         "key": "cluster",
-        "description": "Kafka release 1.1.1 cluster properties",
+        "description": "Kafka release cluster properties",
         "type": "array",
         "properties": [{
             "key": "name",
@@ -136,16 +136,16 @@
         "description": "Kafka service properties",
         "type": "array",
         "properties": [{
-            "key": "log_retention_bytes",
+            "key": "log.retention.bytes",
             "label": "log.retention.bytes",
             "description": "The maximum size of the log before deleting it",
             "type": "integer",
-            "default": 9663676416,
+            "default": -1,
             "max": 1073741824000,
-            "min": 1024,
+            "min": -1,
             "required": "no"
         }, {
-            "key": "log_retention_hours",
+            "key": "log.retention.hours",
             "label": "log.retention.hours",
             "description": "The number of hours to keep a log file before deleting it (in hours)",
             "type": "integer",
@@ -153,8 +153,8 @@
             "max": 8760,
             "min": 1,
             "required": "no"
-        },{
-            "key": "log_segment_bytes",
+        }, {
+            "key": "log.segment.bytes",
             "label": "log.segment.bytes",
             "description": "The maximum size of the segment of log",
             "type": "integer",
@@ -162,8 +162,8 @@
             "max": 10737418240,
             "min": 1048576,
             "required": "no"
-        },{
-            "key": "log_segment_delete_delay_ms",
+        }, {
+            "key": "log.segment.delete.delay.ms",
             "label": "log.segment.delete.delay.ms",
             "description": "The time of delay to delete segment log",
             "type": "integer",
@@ -171,7 +171,7 @@
             "min": 0,
             "required": "no"
         }, {
-            "key": "log_roll_hours",
+            "key": "log.roll.hours",
             "label": "log.roll.hours",
             "description": "The number of hours to keep a log file before roll it to segment",
             "type": "integer",
@@ -180,7 +180,7 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "auto_create_topics_enable",
+            "key": "auto.create.topics.enable",
             "label": "auto.create.topics.enable",
             "description": "Enable auto creation of topic on the server",
             "type": "boolean",
@@ -188,7 +188,7 @@
             "range": [true, false],
             "required": "no"
         }, {
-            "key": "default_replication_factor",
+            "key": "default.replication.factor",
             "label": "default.replication.factor",
             "description": "default replication factors for automatically created topics",
             "type": "integer",
@@ -197,15 +197,15 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "delete_topic_enable",
+            "key": "delete.topic.enable",
             "label": "delete.topic.enable",
             "description": "Enables delete topic. Delete topic through the admin tool will have no effect if this config is turned off",
             "type": "boolean",
             "default": true,
             "range": [true, false],
             "required": "no"
-        },{
-            "key": "offsets_topic_replication_factor",
+        }, {
+            "key": "offsets.topic.replication.factor",
             "label": "offsets.topic.replication.factor",
             "description": "The replication factor for the offsets topic (set higher to ensure availability). Internal topic creation will fail until the cluster size meets this replication factor requirement",
             "type": "integer",
@@ -213,16 +213,16 @@
             "max": 100,
             "min": 1,
             "required": "yes"
-        },  {
-            "key": "log_cleanup_policy",
+        }, {
+            "key": "log.cleanup.policy",
             "label": "log.cleanup.policy",
             "description": "This string designates the retention policy to use on old log segments",
             "type": "string",
             "default": "delete",
             "range": ["delete", "compact"],
             "required": "no"
-        },{
-            "key": "log_cleaner_enable",
+        }, {
+            "key": "log.cleaner.enable",
             "label": "log.cleaner.enable",
             "description":"use to compact messages",
             "type": "boolean",
@@ -230,15 +230,15 @@
             "range": [true, false],
             "required": "no"
         },{
-            "key": "compression_type",
+            "key": "compression.type",
             "label": "compression.type",
             "description": "Specify the final compression type for a given topic",
             "type": "string",
             "default": "producer",
             "range": ["producer", "gzip","snappy","lz4","uncompressed"],
             "required": "no"
-        },{
-            "key": "message_max_bytes",
+        }, {
+            "key": "message.max.bytes",
             "label": "message.max.bytes",
             "description": "This is largest message size Kafka will allow to be appended to this topic",
             "type": "integer",
@@ -255,7 +255,7 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "num_io_threads",
+            "key": "num.io.threads",
             "label": "num.io.threads",
             "description": "The number of io threads that the server uses for carrying out network requests",
             "type": "integer",
@@ -264,7 +264,7 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "num_partitions",
+            "key": "num.partitions",
             "label": "num.partitions",
             "description": "The default number of log partitions per topic",
             "type": "integer",
@@ -281,7 +281,7 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "num_replica_fetchers",
+            "key": "num.replica.fetchers",
             "label": "num.replica.fetchers",
             "description": "Number of fetcher threads used to replicate messages from a source broker",
             "type": "integer",
@@ -290,7 +290,7 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "queued_max_requests",
+            "key": "queued.max.requests",
             "label": "queued.max.requests",
             "description": "The number of queued requests allowed before blocking the network threads",
             "type": "integer",
@@ -299,25 +299,25 @@
             "min": 1,
             "required": "no"
         }, {
-            "key": "socket_receive_buffer_bytes",
+            "key": "socket.receive.buffer.bytes",
             "label": "socket.receive.buffer.bytes",
-            "description": "The SO_RCVBUF buffer of the socket sever sockets",
+            "description": "The SO.RCVBUF buffer of the socket sever sockets",
             "type": "integer",
             "default": 102400,
             "max": 102400000,
             "min": 1024,
             "required": "no"
         }, {
-            "key": "socket_send_buffer_bytes",
+            "key": "socket.send.buffer.bytes",
             "label": "socket.send.buffer.bytes",
-            "description": "The SO_SNDBUF buffer of the socket sever sockets",
+            "description": "The SO.SNDBUF buffer of the socket sever sockets",
             "type": "integer",
             "default": 102400,
             "max": 102400000,
             "min": 1024,
             "required": "no"
-        },{
-            "key": "unclean_leader_election_enable",
+        }, {
+            "key": "unclean.leader.election.enable",
             "label": "unclean.leader.election.enable",
             "description": "Indicates whether to enable replicas not in the ISR set to be elected as leader as a last resort, even though doing so may result in data loss",
             "type": "boolean",
@@ -325,49 +325,101 @@
             "range": [true, false],
             "required": "no"
         }, {
-            "key": "advertised_host_name",
+            "key": "advertised.host.name",
             "label": "advertised.host.name",
             "description": "This is the hostname that will be given out to other workers to connect to",
             "type": "string",
             "default": "",
             "required": "no"
         }, {
-            "key": "advertised_port",
+            "key": "advertised.port",
             "label": "advertised.port",
             "description": "This is the port that will be given out to other workers to connect to",
             "type": "integer",
             "default": 9092,
             "required": "no"
-        },{
-            "key": "kafka-manager_basicAuthentication_enabled",
+        }, {
+            "key": "kafka-manager.basicAuthentication.enabled",
             "label": "kafka-manager.basicAuthentication.enabled",
             "description": "Choose whether or not need to log in kafka-manager",
             "type": "boolean",
             "default": false,
             "range": [true, false],
             "required": "yes"
-        },{
-            "key": "kafka-manager_basicAuthentication_username",
+        }, {
+            "key": "kafka-manager.basicAuthentication.username",
             "label": "kafka-manager.basicAuthentication.username",
             "description": "This is the username that log in kafka-manager",
             "type": "string",
             "default": "admin",
             "required": "yes"
-        },{
-            "key": "kafka-manager_basicAuthentication_password",
+        }, {
+            "key": "kafka-manager.basicAuthentication.password",
             "label": "kafka-manager.basicAuthentication.password",
             "description": "This is the password that log in kafka-manager",
             "type": "password",
             "changeable":true,
             "default": "password",
             "required": "yes"
-        },{
-            "key": "kafka-manager_port",
+        }, {
+            "key": "kafka-manager.port",
             "label": "kafka-manager.port",
             "description": "This is the kafka-manager http port",
             "type": "integer",
             "changeable":true,
             "default": 9000,
+            "required": "no"
+        }, {
+            "key": "zabbix.agent.enable",
+            "label": "zabbix.agent.enable",
+            "description": "This is the config that enable zabbix agent",
+            "type": "boolean",
+            "default": false,
+            "range": [true, false],
+            "required": "yes"
+        }, {
+            "key": "zabbix.server.ip",
+            "label": "zabbix.server.ip",
+            "description": "This is the zabbix-server which host will connect",
+            "type": "string",
+            "changeable":true,
+            "default": "127.0.0.1",
+            "required": "no"
+        }, {
+            "key": "zabbix.agent.port",
+            "label": "zabbix.agent.port",
+            "description": "This is the zabbix.port which host will connect",
+            "default": 10050,
+            "type": "integer",
+            "min": 9000,
+            "max": 65534,
+            "required": "no"
+        }, {
+            "key": "replica.lag.time.max.ms",
+            "label": "replica.lag.time.max.ms",
+            "description": "The time interval at which leaders will remove followers from isr",
+            "default": 10000,
+            "type": "integer",
+            "min": 6000,
+            "max": 99999,
+            "required": "no"
+        }, {
+            "key": "group.max.session.timeout.ms",
+            "label": "group.max.session.timeout.ms",
+            "description": "The maximum allowed session timeout for registered consumers",
+            "default": 1800000,
+            "type": "integer",
+            "min": 0,
+            "max": 9999999,
+            "required": "no"
+        }, {
+            "key": "group.min.session.timeout.ms",
+            "label": "group.min.session.timeout.ms",
+            "description": "The minimum allowed session timeout for registered consumers",
+            "default": 6000,
+            "type": "integer",
+            "min": 0,
+            "max": 60000,
             "required": "no"
         }]
     }]

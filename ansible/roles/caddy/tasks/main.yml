@@ -1,0 +1,71 @@
+---
+- name: set variables
+  set_fact:
+    caddy_version: "1.0.0"
+
+- name: copy systemd files
+  copy: #拷贝service文件
+    src: files/{{ item }}
+    dest: /{{ item }}
+    directory_mode: yes
+  with_items:
+    - lib/systemd/system/
+
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - caddy
+  loop_control:
+    loop_var: svc_name
+
+- name: copy binaries
+  copy: #拷贝service文件
+    src: files/opt/
+    dest: /opt
+    owner: root
+    group: kafka
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
+- name: prepare service directories
+  file:
+    path: /opt/{{ item }}
+    owner: kafka
+    group: kafka
+    state: directory
+  with_items:
+   - caddy/{{ caddy_version }}
+
+
+- name: create symbolic links
+  file:
+    src: /opt/{{ item.name }}/{{ item.version }}
+    dest: /opt/{{ item.name }}/current
+    owner: kafka
+    group: kafka
+    state: link
+  with_items:
+    - name: caddy
+      version: "{{ caddy_version }}"
+
+- name: download caddy server
+  get_url:
+    url: https://github.com/mholt/caddy/releases/download/v{{ caddy_version }}/caddy_v{{ caddy_version }}_linux_amd64.tar.gz
+    dest: files/tmp/caddy-{{ caddy_version }}.tgz
+  delegate_to: localhost
+
+- name: install caddy
+  unarchive:
+    src: files/tmp/caddy-{{ caddy_version }}.tgz
+    dest: /opt/caddy/{{ caddy_version }}
+    owner: kafka
+    group: kafka
+    creates: /opt/caddy/{{ caddy_version }}/caddy
+
+- name: install confd files
+  include_tasks: ../../utils/tasks/process-confd-files.yml
+
+

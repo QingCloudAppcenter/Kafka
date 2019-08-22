@@ -1,0 +1,48 @@
+---
+- name: set variables
+  vars:
+    zabbix: "3.4"
+
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - zabbix-agent
+  loop_control:
+    loop_var: svc_name
+
+
+- name: prepare service directories
+  file:
+    path: /opt/{{ item }}
+    owner: zabbix
+    group: zabbix
+    state: directory
+  with_items:
+    - zabbix
+
+- name: download zabbix deb
+  unarchive:
+    src: https://repo.zabbix.com/zabbix/3.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.4-1+xenial_all.deb
+    dest: /opt/zabbix
+    creates: /opt/zabbix/
+    remote_src: yes
+  delegate_to: localhost
+
+- name: install zabbix agent
+  shell: |
+    dpkg -i zabbix-release_3.4-1+xenial_all.deb
+    apt update 
+    apt -y install zabbix-agent
+  args:
+    chdir: /opt/zabbix/
+    executable: /bin/bash
+    creates: /etc/zabbix/
+
+- name: install confd files
+  include_tasks: ../../utils/tasks/process-confd-files.yml
+
+
+

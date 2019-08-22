@@ -1,0 +1,110 @@
+---
+- name: setvariables
+  set_fact:
+    kafka_manager_version: 2.0.0.2 #latest
+    kafka_version: 2.3.0   #实际安装版本
+    scala_version: "2.11"
+
+- name: copy systemd files
+  copy: #拷贝service文件
+    src: files/{{ item }}
+    dest: /{{ item }}
+    directory_mode: yes
+  with_items:
+    - lib/systemd/system/
+
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - kafka-manager
+  loop_control:
+    loop_var: svc_name
+
+- name: copy binaries
+  copy: #拷贝service文件
+    src: files/opt/
+    dest: /opt
+    owner: root
+    group: kafka
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
+- name: prepare service directories
+  file:
+    path: /opt/{{ item }}
+    owner: kafka
+    group: kafka
+    state: directory
+  with_items:
+    - kafka-manager/{{ kafka_manager_version }}
+
+
+- name: create symbolic links
+  file:
+    src: /opt/{{ item.name }}/{{ item.version }}
+    dest: /opt/{{ item.name }}/current
+    owner: kafka
+    group: kafka
+    state: link
+  with_items:
+    - name: kafka-manager
+      version: "{{ kafka_manager_version }}"
+
+- name: prepare kafka manager directory
+  file:
+    path: files/tmp/kafka-manager-{{ kafka_manager_version }}
+    state: directory
+  delegate_to: localhost
+
+- name: download kafka manager src
+  unarchive:
+    src: https://github.com/yahoo/kafka-manager/archive/{{ kafka_manager_version }}.zip
+    dest: files/tmp
+    creates: files/tmp/kafka-manager-{{ kafka_manager_version }}/sbt
+    remote_src: yes
+  delegate_to: localhost
+
+- name: build kafka manager
+  shell: ./sbt dist
+  args:
+    chdir: files/tmp/kafka-manager-{{ kafka_manager_version }}
+    creates: files/tmp/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    executable: /bin/bash
+  delegate_to: localhost
+
+- name: install kafka manager binaries
+  unarchive:
+    src: files/tmp/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    dest: /opt/kafka-manager
+    owner: kafka
+    group: kafka
+    creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
+
+- name: align kafka manager layout
+  shell: |
+    cp -r /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/* /opt/kafka-manager/{{ kafka_manager_version }}/
+    rm -rf /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}
+  args:
+    creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
+
+- name: update permissions of service directories
+  file:
+    path: /opt/{{ item }}
+    owner: kafka
+    group: kafka
+    recurse: yes
+    state: directory
+  with_items:
+    - kafka-manager
+
+- name: add Kafka commands to system-wide $PATH
+  copy:
+    dest: /etc/profile.d/kafka-path.sh
+    content: 'PATH=$PATH:/opt/kafka/current/bin'
+
+- name: install confd files
+  include_tasks: ../../utils/tasks/process-confd-files.yml
+

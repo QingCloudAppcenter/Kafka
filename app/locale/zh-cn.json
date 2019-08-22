@@ -67,8 +67,16 @@
     "This string designates the retention policy to use on old log segments":"日志清理策略，delete 为直接删除，compact 为压缩",
     "use to compact messages":"用于是否开启日志压缩",
     "Specify the final compression type for a given topic":"用于主题的压缩策略",
-     "Kafka nodes":"Kafka 节点",
-     "client node":"客户端节点",
-     "Indicates whether to enable replicas not in the ISR set to be elected as leader as a last resort, even though doing so may result in data loss":"是否启用不在ISR集合中的副本作为最后的选择，尽管这样做可能导致数据丢失",
-     "The replication factor for the offsets topic (set higher to ensure availability). Internal topic creation will fail until the cluster size meets this replication factor requirement":"内部 offset topic 的复制因子(设定更高的确保可用性)。 如果复制因子大于集群节点数，内部创建主题自动创建将会失败,直到集群大小符合这个复制因子的要求"
+    "Kafka nodes":"Kafka 节点",
+    "client node":"客户端节点",
+    "Indicates whether to enable replicas not in the ISR set to be elected as leader as a last resort, even though doing so may result in data loss":"是否启用不在ISR集合中的副本作为最后的选择，尽管这样做可能导致数据丢失",
+    "The replication factor for the offsets topic (set higher to ensure availability). Internal topic creation will fail until the cluster size meets this replication factor requirement":"内部 offset topic 的复制因子(设定更高的确保可用性)。 如果复制因子大于集群节点数，内部创建主题自动创建将会失败,直到集群大小符合这个复制因子的要求",
+    "This is the config that enable zabbix agent": "用于决定是否开启zabbix agent，默认为不开启",
+    "This is the zabbix-server which host will connect": "若开启zabbix agent，则需要手动设置为您想要连接的zabbix server的IP地址",
+    "This is the zabbix.port which host will connect": "用于连接的端口号，若主机存在防火墙，则需要开启该端口，默认为10050",
+    "Allow all characters to be passed in arguments to user-defined parameters": "是否允许使用全部符号，开启意味着更高的风险和更多的功能",
+    "The time interval at which leaders will remove followers from isr": "leader会将follower从isr中删除的时间间隔",
+    "The maximum allowed session timeout for registered consumers": "已注册消费者最长会话超时时长",
+    "The minimum allowed session timeout for registered consumers": "已注册消费者最短会话超时时长",
+    "notice_when_upgrade": "此版本包含不兼容 Kafka 1.x 版本的改动，可能会导致业务代码异常退出并无法回退！为避免损失，强烈建议先创建一个新集群进行验证，确保可以工作以后再进行升级操作。Kafka 2.3 版本说明请查看官方文档：https://kafka.apache.org/documentation/"
   }

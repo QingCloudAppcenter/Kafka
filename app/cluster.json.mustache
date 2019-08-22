@@ -7,6 +7,7 @@
   },
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
+    "appv-7o37pk3b",
     "appv-3w7cnjir",
     "appv-vx6yl2x5",
     "appv-t2pkfxjs"
@@ -17,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-0v88fpot"
+      "image": "img-td987hxb"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -98,7 +99,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-0v88fpot"
+      "image": "img-td987hxb"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -135,34 +136,40 @@
     }
   }],
   "env": {
-    "advertised.host.name": {{env.advertised_host_name}},
-    "advertised.port": {{env.advertised_port}},
-    "auto.create.topics.enable": {{env.auto_create_topics_enable}},
-    "compression.type": {{env.compression_type}},
-    "default.replication.factor": {{env.default_replication_factor}},
-    "delete.topic.enable": {{env.delete_topic_enable}},
-    "log.cleaner.enable": {{env.log_cleaner_enable}},
-    "log.cleanup.policy": {{env.log_cleanup_policy}},
-    "log.retention.bytes": {{env.log_retention_bytes}},
-    "log.retention.hours": {{env.log_retention_hours}},
-    "log.roll.hours":{{env.log_roll_hours}},
-    "log.segment.bytes":{{env.log_segment_bytes}},
-    "log.segment.delete.delay.ms":{{env.log_segment_delete_delay_ms}},
-    "message.max.bytes": {{env.message_max_bytes}},
+    "replica.lag.time.max.ms": {{env.replica.lag.time.max.ms}},
+    "group.max.session.timeout.ms": {{env.group.max.session.timeout.ms}},
+    "group.min.session.timeout.ms": {{env.group.min.session.timeout.ms}},
+    "zabbix.server.ip": {{env.zabbix.server.ip}},
+    "zabbix.agent.port": {{env.zabbix.agent.port}},
+    "zabbix.agent.enable": {{env.zabbix.agent.enable}},
+    "advertised.host.name": {{env.advertised.host.name}},
+    "advertised.port": {{env.advertised.port}},
+    "auto.create.topics.enable": {{env.auto.create.topics.enable}},
+    "compression.type": {{env.compression.type}},
+    "default.replication.factor": {{env.default.replication.factor}},
+    "delete.topic.enable": {{env.delete.topic.enable}},
+    "log.cleaner.enable": {{env.log.cleaner.enable}},
+    "log.cleanup.policy": {{env.log.cleanup.policy}},
+    "log.retention.bytes": {{env.log.retention.bytes}},
+    "log.retention.hours": {{env.log.retention.hours}},
+    "log.roll.hours":{{env.log.roll.hours}},
+    "log.segment.bytes":{{env.log.segment.bytes}},
+    "log.segment.delete.delay.ms":{{env.log.segment.delete.delay.ms}},
+    "message.max.bytes": {{env.message.max.bytes}},
     "num.network.threads": {{env.num.network.threads}},
-    "num.io.threads": {{env.num_io_threads}},
-    "num.partitions": {{env.num_partitions}},
+    "num.io.threads": {{env.num.io.threads}},
+    "num.partitions": {{env.num.partitions}},
     "num.recovery.threads.per.data.dir": {{env.num.recovery.threads.per.data.dir}},
-    "num.replica.fetchers": {{env.num_replica_fetchers}},
-    "offsets.topic.replication.factor": {{env.offsets_topic_replication_factor}},
-    "queued.max.requests": {{env.queued_max_requests}},
-    "socket.receive.buffer.bytes": {{env.socket_receive_buffer_bytes}},
-    "socket.send.buffer.bytes": {{env.socket_send_buffer_bytes}},
-    "unclean.leader.election.enable": {{env.unclean_leader_election_enable}},
-    "kafka-manager.basicAuthentication.enabled": {{env.kafka-manager_basicAuthentication_enabled}},
-    "kafka-manager.basicAuthentication.username": {{env.kafka-manager_basicAuthentication_username}},
-    "kafka-manager.basicAuthentication.password": {{env.kafka-manager_basicAuthentication_password}},
-    "kafka-manager.port": {{env.kafka-manager_port}}
+    "num.replica.fetchers": {{env.num.replica.fetchers}},
+    "offsets.topic.replication.factor": {{env.offsets.topic.replication.factor}},
+    "queued.max.requests": {{env.queued.max.requests}},
+    "socket.receive.buffer.bytes": {{env.socket.receive.buffer.bytes}},
+    "socket.send.buffer.bytes": {{env.socket.send.buffer.bytes}},
+    "unclean.leader.election.enable": {{env.unclean.leader.election.enable}},
+    "kafka-manager.basicAuthentication.enabled": {{env.kafka-manager.basicAuthentication.enabled}},
+    "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
+    "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
+    "kafka-manager.port": {{env.kafka-manager.port}}
   },
   "endpoints": {
     "client": {

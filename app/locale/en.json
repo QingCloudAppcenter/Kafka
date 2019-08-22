@@ -39,7 +39,14 @@
     "IsrShrinksPerSec_1MinuteRate": "IsrShrinksPerSec_1MinuteRate",
     "KafkaController_ActiveControllerCount": "KafkaController_ActiveControllerCount",
     "KafkaController_OfflinePartitionsCount": "KafkaController_OfflinePartitionsCount",
-    "bps": "bps"
-
+    "bps": "bps",
+    "This is the config that enable zabbix agent": "This is the config that enable zabbix agent",
+    "This is the zabbix-server which host will connect": "This is the zabbix-server which host will connect",
+    "This is the zabbix.port which host will connect": "This is the zabbix.port which host will connect",
+    "Allow all characters to be passed in arguments to user-defined parameters": "Allow all characters to be passed in arguments to user-defined parameters",
+    "The time interval at which leaders will remove followers from isr": "The time interval at which leaders will remove followers from isr",
+    "The maximum allowed session timeout for registered consumers": "The maximum allowed session timeout for registered consumers",
+    "The minimum allowed session timeout for registered consumers": "The minimum allowed session timeout for registered consumers",
+    "notice_when_upgrade": "The new version app may need refit your kafka consumer code! Make sure you are using the new config!!!"
 }
 
