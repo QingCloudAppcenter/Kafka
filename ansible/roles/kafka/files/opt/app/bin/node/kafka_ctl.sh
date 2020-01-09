@@ -9,6 +9,7 @@ init() {
   chown -R kafka.kafka /data/$MY_ROLE  
   local htmlFile=/data/$MY_ROLE/index.html
   [ -e "$htmlFile" ] || ln -s /opt/app/conf/caddy/index.html $htmlFile
+  ln -s /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
 }
 
 
@@ -23,7 +24,8 @@ start() {
 update() {
   _update $@
   if [ "$MY_ROLE" == "kafka-manager" ]; then
-    addCluster; updateCluster
+    addCluster || log "Failed to addCluster when update";
+    updateCluster || log "Failed to updateCluster when update";
   fi
 }
 
