@@ -18,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-td987hxb"
+      "image": "img-i51t9u25"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -99,7 +99,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-td987hxb"
+      "image": "img-i51t9u25"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -132,7 +132,7 @@
       "healthy_threshold": 2,
       "unhealthy_threshold": 2,
       "check_cmd": "appctl check",
-      "action_cmd": "appctl revive"
+      "action_cmd": "appctl restart"
     }
   }],
   "env": {
