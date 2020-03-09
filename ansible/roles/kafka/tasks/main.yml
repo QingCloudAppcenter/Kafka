@@ -2,7 +2,8 @@
 - name: set variables
   set_fact:
     kafka_version: 2.3.0   #实际安装版本
-    scala_version: "2.11"
+    scala_version1: "2.11"
+    scala_version2: "2.12"
 
 - name: copy systemd files
   copy: #拷贝service文件
@@ -55,11 +56,12 @@
     group: kafka
     state: directory
   with_items:
-    - kafka/{{ kafka_version }}
+    - kafka/2.11-{{ kafka_version }}
+    - kafka/2.12-{{ kafka_version }}
 
 - name: create symbolic links
   file:
-    src: /opt/{{ item.name }}/{{ item.version }}
+    src: /opt/{{ item.name }}/2.11-{{ item.version }}
     dest: /opt/{{ item.name }}/current
     owner: kafka
     group: kafka
@@ -68,27 +70,43 @@
     - name: kafka
       version: "{{ kafka_version }}"
 
-- name: download Kafka
+- name: download Kafka 2.11
   get_url:
-    url: https://archive.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz
-    dest: files/tmp/kafka-{{ kafka_version }}.tgz
+    url: https://archive.apache.org/dist/kafka/{{ item.kafka_version }}/kafka_{{ item.scala_version }}-{{ item.kafka_version }}.tgz
+    dest: files/tmp/kafka_{{ item.scala_version }}-{{ item.kafka_version }}.tgz
   delegate_to: localhost
+  with_items:
+    - scala_version: "{{ scala_version1 }}"
+      kafka_version: "{{ kafka_version }}"
+    - scala_version: "{{ scala_version2 }}"
+      kafka_version: "{{ kafka_version }}"
 
 - name: install kafka
   unarchive:
-    src: files/tmp/kafka-{{ kafka_version }}.tgz
-    dest: /opt/kafka/{{ kafka_version }}
+    src: files/tmp/kafka_{{ item.scala_version }}-{{ item.kafka_version }}.tgz
+    dest: /opt/kafka/{{ item.scala_version }}-{{ item.kafka_version }}
     owner: kafka
     group: kafka
-    creates: /opt/kafka/{{ kafka_version }}/bin/kafka-server-start.sh
+    creates: /opt/kafka/{{ item.scala_version }}-{{ item.kafka_version }}/bin/kafka-server-start.sh
     extra_opts: [ '--strip-components=1' ]
+  with_items:
+    - scala_version: "{{ scala_version1 }}"
+      kafka_version: "{{ kafka_version }}"
+    - scala_version: "{{ scala_version2 }}"
+      kafka_version: "{{ kafka_version }}"
 
 - name: install statsd metrics
   copy:
     src: ../deps/kafka-statsd-metrics2-master-0.4.0.jar
-    dest: /opt/kafka/current/libs
+    dest: /opt/kafka/{{ item.scala_version }}-{{ item.kafka_version }}/libs
     owner: kafka
     group: kafka
+  with_items:
+    - scala_version: "{{ scala_version1 }}"
+      kafka_version: "{{ kafka_version }}"
+    - scala_version: "{{ scala_version2 }}"
+      kafka_version: "{{ kafka_version }}"
+
 
 - name: update permissions of service directories
   file:

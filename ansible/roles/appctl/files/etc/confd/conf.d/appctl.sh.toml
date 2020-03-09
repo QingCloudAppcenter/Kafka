@@ -1,7 +1,7 @@
 [template]
 src = "appctl.sh.tmpl"
 dest = "/opt/app/bin/tmpl/appctl.sh"
-mode = "0600"
+mode = "0700"
 keys = [
   "/",
 ]

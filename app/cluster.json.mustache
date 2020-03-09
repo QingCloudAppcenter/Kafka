@@ -18,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-i51t9u25"
+      "image": "img-dsqzpsm9"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -31,7 +31,7 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl start",
+        "cmd": "appctl init; appctl start",
         "order": 1
       },
       "stop": {
@@ -99,7 +99,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-i51t9u25"
+      "image": "img-dsqzpsm9"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -112,7 +112,7 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl start",
+        "cmd": "appctl init; appctl start",
         "order": 2
       },
       "stop": {
@@ -169,7 +169,8 @@
     "kafka-manager.basicAuthentication.enabled": {{env.kafka-manager.basicAuthentication.enabled}},
     "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
     "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
-    "kafka-manager.port": {{env.kafka-manager.port}}
+    "kafka-manager.port": {{env.kafka-manager.port}},
+    "kafka.scala.version": {{env.kafka.scala.version}}
   },
   "endpoints": {
     "client": {

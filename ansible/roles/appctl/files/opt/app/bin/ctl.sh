@@ -13,12 +13,19 @@
 EC_CHECK_INACTIVE=200
 EC_CHECK_PORT_ERR=201
 EC_CHECK_PROTO_ERR=202
+EC_ENV_ERR=203
+EC_CHECK_HTTP_REQ_ERR=204
+EC_CHECK_HTTP_CODE_ERR=205
 
 command=$1
 args="${@:2}"
 
 log() {
-  logger -t appctl --id=$$ [cmd=$command] "$@"
+  if [ "$1" == "--debug" ]; then
+    [ "$APPCTL_ENV" == "dev" ] || return 0
+    shift
+  fi
+  logger -S 5000 -t appctl --id=$$ -- "[cmd=$command args='$args'] $@"
 }
 
 retry() {
@@ -32,24 +39,36 @@ retry() {
     $cmd && return 0 || {
       retCode=$?
       if [ "$retCode" = "$stopCode" ]; then
-        log "'$cmd' returned with stop code $stopCode. Stopping ..." && return $retCode
+        log "'$cmd' returned with stop code $stopCode. Stopping ..."
+        return $retCode
       fi
     }
     sleep $interval
     tried=$((tried+1))
   done
 
-  log "'$cmd' still returned errors after $tried attempts. Stopping ..." && return $retCode
+  log "'$cmd' still returned errors after $tried attempts. Stopping ..."
+  return $retCode
+}
+
+rotate() {
+  local maxFilesCount=5
+  for path in $@; do
+    for i in $(seq 1 $maxFilesCount | tac); do
+      if [ -f "${path}.$i" ]; then mv ${path}.$i ${path}.$(($i+1)); fi
+    done
+    if [ -f "$path" ]; then cp $path ${path}.1; fi
+  done
 }
 
 execute() {
-  local cmd=$1
+  local cmd=$1; log --debug "Executing command ..."
   [ "$(type -t $cmd)" = "function" ] || cmd=_$cmd
   $cmd ${@:2}
 }
 
 applyEnvFiles() {
-  for envFile in $(find /opt/app/bin/envs -name "*.env"); do . $envFile; done
+  local envFile; for envFile in $(find /opt/app/bin/envs -name "*.env"); do . $envFile; done
 }
 
 applyRoleScripts() {
@@ -57,16 +76,32 @@ applyRoleScripts() {
   if [ -f "$scriptFile" ]; then . $scriptFile; fi
 }
 
+checkEnv() {
+  test -n "$1"
+}
+
+checkMounts() {
+  test -n "${DATA_MOUNTS+x}" || {
+    log "ERROR: DATA_MOUNTS variable is required to be set."
+    return 1
+  }
+
+  local dataDir; for dataDir in $DATA_MOUNTS; do
+    grep -qs " $dataDir " /proc/mounts
+  done
+}
+
 getServices() {
   if [ "$1" = "-a" ]; then
     echo $SERVICES
   else
-    echo $SERVICES | xargs -n1 | awk -F/ '$2=="true"'
+    echo $SERVICES | xargs -n1 | awk -F/ '$2=="true"' | xargs
   fi
 }
 
 isSvcEnabled() {
-  [ "$(echo $(getServices -a) | xargs -n1 | awk -F/ '$1=="'$1'" {print $2}')" = "true" ]
+  local svc="${1%%/*}"
+  [ "$(echo $(getServices -a) | xargs -n1 | awk -F/ '$1=="'$svc'" {print $2}')" = "true" ]
 }
 
 checkActive() {
@@ -74,30 +109,39 @@ checkActive() {
 }
 
 checkEndpoint() {
-  local host=$MY_IP proto=${1%:*} port=${1#*:}
-  case $proto in
-  tcp) nc -z -w5 $host $port ;;
-  udp) nc -z -u -q5 -w5 $host $port ;;
-  http) local code="$(curl -s -o /dev/null -w "%{http_code}" $host:$port)"; [[ "$code" =~ ^(200|302|401|403|404)$ ]];;
-  *) return $EC_CHECK_PROTO_ERR
-  esac
+  local proto=${1%:*} host=${2-$MY_IP} port=${1#*:}
+  if [ "$proto" = "tcp" ]; then
+    nc -z -w5 $host $port
+  elif [ "$proto" = "http" ]; then
+    local code
+    code="$(curl -s -m5 -o /dev/null -w "%{http_code}" $host:$port)" || {
+      log "ERROR: HTTP $code - failed to check http://$host:$port ($?)."
+      return $EC_CHECK_HTTP_REQ_ERR
+    }
+    [[ "$code" =~ ^(200|302|401|403|404)$ ]] || {
+      log "ERROR: unexpected HTTP code $code."
+      return $EC_CHECK_HTTP_CODE_ERR
+    }
+  else
+    return $EC_CHECK_PROTO_ERR
+  fi
 }
 
-isInitialized() {
+isNodeInitialized() {
   local svcs="$(getServices -a)"
-  [ "$(systemctl is-enabled ${svcs%%/*})" = "disabled" ]
+  [ "$(systemctl is-enabled ${svcs%%/*})" == "disabled" ]
 }
 
 initSvc() {
-  systemctl unmask -q ${svc%%/*}
+  systemctl unmask -q ${1%%/*}
 }
 
-checkSvc() {
-  checkActive ${svc%%/*} || {
-    log "Service '$svc' is inactive."
+_checkSvc() {
+  checkActive ${1%%/*} || {
+    log "Service '$1' is inactive."
     return $EC_CHECK_INACTIVE
   }
-  local endpoints=$(echo $svc | awk -F/ '{print $3}')
+  local endpoints=$(echo $1 | awk -F/ '{print $3}')
   local endpoint; for endpoint in ${endpoints//,/ }; do
     checkEndpoint $endpoint || {
       log "Endpoint '$endpoint' is unreachable."
@@ -107,64 +151,66 @@ checkSvc() {
 }
 
 startSvc() {
-  systemctl start ${svc%%/*}
+  systemctl start ${1%%/*}
 }
 
 stopSvc() {
-  systemctl stop ${svc%%/*}
+  systemctl stop ${1%%/*}
 }
 
 restartSvc() {
-  stopSvc $svc && startSvc $svc
+  stopSvc $1
+  startSvc $1
 }
 
 ### app management
 
-_init() {
-  mkdir -p /data/appctl/logs
-  chown -R syslog.adm /data/appctl/logs
+_preCheck() {
+  checkEnv "$MY_IP"
+}
 
+_initNode() {
+  checkMounts
   rm -rf /data/lost+found
-
+  install -d -o syslog /data/appctl/logs
   local svc; for svc in $(getServices -a); do initSvc $svc; done
 }
 
 _revive() {
   local svc; for svc in $(getServices); do
-    if [ "$1" == "--check-only" ]; then
-      checkSvc $svc
-    else
-      checkSvc $svc || restartSvc $svc
-    fi
+    execute checkSvc $svc || restartSvc $svc || log "ERROR: failed to restart '$svc' ($?)."
   done
 }
 
 _check() {
-  execute revive --check-only
+  local svc; for svc in $(getServices); do
+    execute checkSvc $svc
+  done
 }
 
 _start() {
-  isInitialized || {
-    execute init
+  isNodeInitialized || {
+    execute initNode
     systemctl restart rsyslog # output to log files under /data
   }
-
   local svc; for svc in $(getServices); do startSvc $svc; done
 }
 
 _stop() {
+  log "Stopping all services ..."
   local svc; for svc in $(getServices -a | xargs -n1 | tac); do stopSvc $svc; done
 }
 
 _restart() {
-  local svc; for svc in $(getServices); do restartSvc $svc; done
+  execute stop
+  execute start
 }
 
-_update() {
-  if ! isInitialized; then return 0; fi # only update after initialized
-
-  local svc; for svc in ${@:-${MY_ROLE%%-*}}; do
-    stopSvc $svc
+_reload() {
+  if ! isNodeInitialized; then return 0; fi # only reload after initialized
+  local svcs="${@:-$(getServices -a)}"
+  local svc; for svc in $(echo $svcs | xargs -n1 | tac); do stopSvc $svc; done
+  local svc; for svc in $svcs; do
     if isSvcEnabled $svc; then startSvc $svc; fi
   done
 }
@@ -172,6 +218,8 @@ _update() {
 applyEnvFiles
 applyRoleScripts
 
+[ "$APPCTL_ENV" == "dev" ] && set -x
 set -eo pipefail
 
+execute preCheck
 execute $command $args

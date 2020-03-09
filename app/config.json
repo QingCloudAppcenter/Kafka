@@ -64,8 +64,8 @@
                 "type": "integer",
                 "default": 3,
                 "auto_scale_step": 1,
-                 "min":1,
-                 "max":200,
+                "min":1,
+                "max":200,
                 "required": "yes"
             }, {
                 "key": "instance_class",
@@ -80,7 +80,7 @@
                 "label": "Volume Size",
                 "description": "The volume size for each instance",
                 "type": "integer",
-                 "auto_scale_step": 10,
+                "auto_scale_step": 10,
                 "default": 30,
                 "required": "yes"
             }]
@@ -111,8 +111,8 @@
             "description": "Number of nodes for the cluster to create",
             "type": "integer",
             "default": 1,
-             "min":0,
-             "max":20,
+            "min":0,
+            "max":20,
             "required": "yes"
         }, {
             "key": "instance_class",
@@ -421,6 +421,15 @@
             "min": 0,
             "max": 60000,
             "required": "no"
+        }, {
+            "key": "kafka.scala.version",
+            "label": "kafka.scala.version",
+            "description": "The scala version of kafka instance used",
+            "default": "2.11",
+            "type": "string",
+            "range": ["2.11", "2.12"],
+            "changeable": false,
+            "required": "yes"
         }]
     }]
 }
