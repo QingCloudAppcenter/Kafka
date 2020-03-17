@@ -3,7 +3,7 @@
 init() {
   if [[ "${KAFKA_SCALA_VERSION}" = "2.12" ]]; then  # default version 2.11
     rm -f /opt/kafka/current;
-    ln -sf /opt/kafka/2.12-2.3.1 /opt/kafka/current
+    ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-2.3.1 /opt/kafka/current
   fi
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi

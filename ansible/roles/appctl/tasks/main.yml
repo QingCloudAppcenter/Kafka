@@ -26,7 +26,7 @@
     src: files/opt/app/
     dest: /opt/app
     owner: root
-    group: svc
+    group: root
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
