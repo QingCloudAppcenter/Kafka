@@ -58,16 +58,6 @@
     state: directory
   with_items: "{{ scala_versions }}"
 
-- name: create symbolic links
-  file:
-    src: /opt/{{ item.name }}/2.11-{{ item.version }}
-    dest: /opt/{{ item.name }}/current
-    owner: kafka
-    group: kafka
-    state: link
-  with_items:
-    - name: kafka
-      version: "{{ kafka_version }}"
 
 - name: download Kafka
   get_url:
@@ -111,8 +101,6 @@
 
 - name: set up version env
   copy:
-    dest: /opt/app/bin/version.env
-    content: KAFKA_VERSION=2.2.0      #因为kafka manager支持的最大的kafka版本为2.2.0，实测2.3.0也可使用
+    dest: /opt/app/bin/envs/version.env
+    content: KAFKA_VERSION_4_MANAGER=2.2.0      #因为kafka manager支持的最大的kafka版本为2.2.0，实测2.3.0也可使用
 
-- name: install confd files
-  include_tasks: ../../utils/tasks/process-confd-files.yml

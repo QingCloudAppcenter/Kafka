@@ -1,6 +1,6 @@
 {{- if eq $myRole "kafka" }}
 
-cat > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
+flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
 # fixed params
 broker.id={{ getv "/host/sid" }}
 broker.rack={{ getv "/host/zone" (getv "/cluster/zone") }}

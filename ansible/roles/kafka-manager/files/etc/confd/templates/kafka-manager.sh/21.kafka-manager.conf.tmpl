@@ -2,7 +2,7 @@
 
 encrypted=$(echo -n {{ getv "/cluster/cluster_id" }}{{ getv "/cluster/user_id" }} | sha256sum | base64)
 
-cat > /opt/app/conf/kafka-manager/application.conf << APP_CONF_EOF
+flush > /opt/app/conf/kafka-manager/application.conf << APP_CONF_EOF
 play.http.secret.key="${encrypted:0:65}"
 play.http.secret.key=\${?APPLICATION_SECRET}
 

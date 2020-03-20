@@ -1,6 +1,6 @@
 ---
 - name: set variables
-  vars:
+  set_fact:
     zabbix: "3.4"
 
 - name: disable auto start

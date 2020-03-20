@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 init() {
-  if [[ "${KAFKA_SCALA_VERSION}" = "2.12" ]]; then  # default version 2.11
-    rm -f /opt/kafka/current;
-    ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-2.3.1 /opt/kafka/current
-  fi
+  ln -snf /opt/kafka/${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
   mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
@@ -85,7 +82,7 @@ buildParams() {
   local params="
   name=$CLUSTER_ID
   zkHosts=$ZK_HOSTS
-  kafkaVersion=$KAFKA_VERSION
+  kafkaVersion=$KAFKA_VERSION_4_MANAGER
   jmxEnabled=true
   jmxUser=""
   jmxPass=""
