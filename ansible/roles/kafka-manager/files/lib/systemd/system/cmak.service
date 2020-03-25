@@ -12,8 +12,8 @@ User=kafka
 Group=kafka
 LimitNOFILE=500000
 WorkingDirectory=/data/kafka-manager
-EnvironmentFile=/opt/app/conf/kafka-manager/.env
-ExecStart=/opt/kafka-manager/current/bin/kafka-manager $KAFKA_MANAGER_OPTS
+EnvironmentFile=/opt/app/conf/cmak/.env
+ExecStart=/opt/cmak/current/bin/cmak $KAFKA_MANAGER_OPTS
 Restart=on-failure
 
 [Install]

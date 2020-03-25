@@ -3,16 +3,25 @@
   set_fact:
     zabbix: "3.4"
 
-- name: disable auto start
-  systemd:
-    name: "{{ svc_name }}"
-    state: stopped
-    masked: yes
-  loop:
-  - zabbix-agent
-  loop_control:
-    loop_var: svc_name
+- name: install confd files
+  include_role:
+    name: confd-files-1.0.2
 
+- name: add the service group
+  group:
+    name: zabbix
+    state: present
+
+- name: add the service user
+  user:
+    name: zabbix
+    groups: zabbix
+    shell: /bin/false
+    create_home: no
+    home: "/var/lib/zabbix/"
+    append: yes
+    comment: "Service User"
+    state: present
 
 - name: prepare service directories
   file:
@@ -29,7 +38,6 @@
     dest: /opt/zabbix
     creates: /opt/zabbix/
     remote_src: yes
-  delegate_to: localhost
 
 - name: install zabbix agent
   shell: |
@@ -41,8 +49,13 @@
     executable: /bin/bash
     creates: /etc/zabbix/
 
-- name: install confd files
-  include_tasks: ../../utils/tasks/process-confd-files.yml
-
-
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - zabbix-agent
+  loop_control:
+    loop_var: svc_name
 

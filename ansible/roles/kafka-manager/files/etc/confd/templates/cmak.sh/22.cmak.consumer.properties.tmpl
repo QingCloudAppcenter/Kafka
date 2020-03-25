@@ -1,6 +1,6 @@
-{{- if eq $myRole "kafka-manager" }}
+{{- if eq $myRole "client" }}
 
-flush > /opt/app/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
+flush > /opt/app/conf/cmak/consumer.properties << CONSUMER_PROP_EOF
 security.protocol=PLAINTEXT
 key.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 value.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer

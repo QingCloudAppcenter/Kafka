@@ -1,6 +1,8 @@
+{{- $myRole := getv "/host/role" }}
+{{- $myIp := getv "/host/ip" }}
 flush > /opt/app/conf/caddy/Caddyfile << CADDYFILE_EOF
 {{ $myIp }}:80 {
-  root /data/{{ $myRole }}
+  root /data/{{- if eq $myRole "kafka" }}kafka{{ else }}kafka-manager{{- end }}
   gzip
   browse
   tls off

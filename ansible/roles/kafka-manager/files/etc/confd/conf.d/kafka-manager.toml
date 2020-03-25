@@ -1,8 +1,0 @@
-[template]
-src = "kafka-manager.sh.tmpl"
-dest = "/opt/app/bin/tmpl/kafka-manager.sh"
-mode = "0700"
-keys = [
-  "/",
-]
-reload_cmd = "/opt/app/bin/tmpl/kafka-manager.sh; appctl reload kafka-manager"

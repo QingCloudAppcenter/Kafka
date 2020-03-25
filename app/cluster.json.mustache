@@ -18,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-xfevme52"
+      "image": "img-kalqd1vz"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -30,8 +30,12 @@
       "filesystem": "xfs"
     },
     "services": {
+      "init": {
+        "order": 1,
+        "cmd": "appctl init"
+      },
       "start": {
-        "cmd": "appctl init; appctl start",
+        "cmd": "appctl start",
         "order": 1
       },
       "stop": {
@@ -99,7 +103,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-xfevme52"
+      "image": "img-kalqd1vz"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},

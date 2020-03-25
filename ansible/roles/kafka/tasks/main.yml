@@ -6,6 +6,10 @@
     - 2.11
     - 2.12
 
+- name: install confd files
+  include_role:
+    name: confd-files-1.0.2
+
 - name: copy systemd files
   copy: #拷贝service文件
     src: files/{{ item }}
@@ -40,6 +44,15 @@
     comment: "Service User"
     state: present
 
+- name: add ppa repo
+  apt_repository:
+    repo: ppa:openjdk-r/ppa
+
+- name: install tools
+  apt:
+    update_cache: yes
+    name: ['openjdk-11-jdk', 'unzip','arping']
+    state: present
 
 - name: copy binaries
   copy: #拷贝service文件
@@ -73,6 +86,7 @@
     group: kafka
     creates: /opt/kafka/{{ item }}-{{ kafka_version }}/bin/kafka-server-start.sh
     extra_opts: [ '--strip-components=1' ]
+    remote_src: True
   with_items: "{{ scala_versions }}"
 
 - name: install statsd metrics
@@ -102,5 +116,5 @@
 - name: set up version env
   copy:
     dest: /opt/app/bin/envs/version.env
-    content: KAFKA_VERSION_4_MANAGER=2.2.0      #因为kafka manager支持的最大的kafka版本为2.2.0，实测2.3.0也可使用
+    content: KAFKA_VERSION_4_MANAGER=2.2.0      #因为 cmak 支持的kafka版本为2.2.0 2.4.0，无 2.3.0， 实测2.3.0也可使用
 

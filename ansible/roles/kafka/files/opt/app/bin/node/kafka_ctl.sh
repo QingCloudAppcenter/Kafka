@@ -5,7 +5,6 @@ init() {
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
   mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
-  touch    /data/zabbix/logs/zabbix_agentd.log
   chown -R zabbix.zabbix /data/zabbix
   chown -R kafka.kafka /data/$MY_ROLE  
   local htmlFile=/data/$MY_ROLE/index.html

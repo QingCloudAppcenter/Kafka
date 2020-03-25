@@ -11,7 +11,6 @@
     - disable-apt-jobs-1.0.0
     - disable-motd-1.0.0
     - app-agent-1.0.1
-    - confd-files-1.0.2
     - appctl-1.0.9
     - arping-1.0.0
     - caddy-1.0.6
