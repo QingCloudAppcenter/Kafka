@@ -46,12 +46,12 @@
 
 - name: add ppa repo
   apt_repository:
-    repo: ppa:openjdk-r/ppa
+    repo: ppa:openjdk-r/ppa  #for system version = 16.04
 
 - name: install tools
   apt:
     update_cache: yes
-    name: ['openjdk-11-jdk', 'unzip','arping']
+    name: ['openjdk-11-jdk', 'openjdk-8-jdk','unzip','arping']
     state: present
 
 - name: copy binaries
