@@ -1,7 +1,7 @@
 ---
 - name: setvariables
   set_fact:
-    kafka_manager_version: 3.0.0.4 #latest
+    kafka_manager_version: "2.0.0.2"
     scala_version: "2.11"
 
 - name: install confd files
@@ -22,7 +22,7 @@
     state: stopped
     masked: yes
   loop:
-  - cmak
+  - kafka-manager
   loop_control:
     loop_var: svc_name
 
@@ -42,7 +42,7 @@
     group: kafka
     state: directory
   with_items:
-    - cmak/cmak-{{ kafka_manager_version }}
+    - kafka-manager/kafka-manager-{{ kafka_manager_version }}
 
 - name: create symbolic links
   file:
@@ -52,22 +52,33 @@
     group: kafka
     state: link
   with_items:
-    - name: cmak
+    - name: kafka-manager
       version: "{{ kafka_manager_version }}"
 
 - name: download kafka manager src
-  get_url:
-    url: https://github.com/yahoo/CMAK/releases/download/{{ item }}/cmak-{{ item }}.zip
-    dest: /tmp/cmak-{{ item }}.zip
-  with_items: "{{ kafka_manager_version }}"
+  unarchive:
+    src: https://github.com/yahoo/cmak/archive/{{ kafka_manager_version }}.zip
+    dest: /tmp
+    creates: /tmp/CMAK-{{ kafka_manager_version }}/sbt
+    owner: kafka
+    group: kafka
+    remote_src: yes
+
+- name: build kafka manager
+  shell: ./sbt dist
+  args:
+    chdir: /tmp/CMAK-{{ kafka_manager_version }}
+    creates: /tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    executable: /bin/bash
+    remote_src: yes
 
 - name: install kafka manager binaries
   unarchive:
-    src: /tmp/cmak-{{ kafka_manager_version }}.zip
-    dest: /opt/cmak
+    src: /tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    dest: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}
     owner: kafka
     group: kafka
-    creates: /opt/cmak/cmak-{{ kafka_manager_version }}/bin/cmak
+    creates: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/bin/kafka-manager
     remote_src: yes
 
 - name: update permissions of service directories
@@ -78,5 +89,5 @@
     recurse: yes
     state: directory
   with_items:
-    - cmak
+    - kafka-manager
 

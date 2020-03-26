@@ -6,9 +6,9 @@
 
 encrypted=$(echo -n {{ getv "/cluster/cluster_id" }}{{ getv "/cluster/user_id" }} | sha256sum | base64)
 
-flush > /opt/app/conf/cmak/application.conf << APP_CONF_EOF
-play.crypto.secret="${encrypted:0:65}"
-play.crypto.secret=\${?APPLICATION_SECRET}
+flush > /opt/app/conf/kafka-manager/application.conf << APP_CONF_EOF
+play.http.secret.key="${encrypted:0:65}"
+play.http.secret.key=\${?APPLICATION_SECRET}
 
 # The application languages
 # ~~~~~
@@ -19,12 +19,12 @@ play.http.requestHandler = "play.http.DefaultHttpRequestHandler"
 play.http.context = "/"
 
 # dependency
-kafka-manager.consumer.properties.file=/opt/app/conf/cmak/consumer.properties
-cmak.zkhosts="{{ range $i, $p := getvs "/links/zk_service/hosts/*/ip" }}
+kafka-manager.consumer.properties.file=/opt/app/conf/kafka-manager/consumer.properties
+kafka-manager.zkhosts="{{ range $i, $p := getvs "/links/zk_service/hosts/*/ip" }}
   {{- if $i }},{{ end }}
   {{- . }}:{{ $zkPort }}
 {{- end }}/kafka/{{ getv "/cluster/cluster_id" }}"
-cmak.base-zk-path="/kafka-manager/{{ getv "/cluster/cluster_id" }}"
+kafka-manager.base-zk-path="/kafka-manager"
 pinned-dispatcher.type="PinnedDispatcher"
 pinned-dispatcher.executor="thread-pool-executor"
 application.features=["KMClusterManagerFeature","KMTopicManagerFeature","KMPreferredReplicaElectionFeature","KMReassignPartitionsFeature"]

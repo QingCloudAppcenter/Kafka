@@ -17,7 +17,8 @@ start() {
   _start
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
-    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'."
+    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'.";
+    updateCluster || log "Failed to updateCluster when update";
   fi
 }
 
