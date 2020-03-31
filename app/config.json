@@ -64,8 +64,8 @@
                 "type": "integer",
                 "default": 3,
                 "auto_scale_step": 1,
-                "min":1,
-                "max":200,
+                "min": 1,
+                "max": 200,
                 "required": "yes"
             }, {
                 "key": "instance_class",
@@ -111,8 +111,8 @@
             "description": "Number of nodes for the cluster to create",
             "type": "integer",
             "default": 1,
-            "min":0,
-            "max":20,
+            "min": 0,
+            "max": 20,
             "required": "yes"
         }, {
             "key": "instance_class",
@@ -358,7 +358,7 @@
             "label": "kafka-manager.basicAuthentication.password",
             "description": "This is the password that log in kafka-manager",
             "type": "password",
-            "changeable":true,
+            "changeable": true,
             "default": "password",
             "required": "yes"
         }, {
@@ -366,7 +366,7 @@
             "label": "kafka-manager.port",
             "description": "This is the kafka-manager http port",
             "type": "integer",
-            "changeable":true,
+            "changeable": true,
             "default": 9000,
             "required": "no"
         }, {
@@ -382,7 +382,7 @@
             "label": "zabbix.server.ip",
             "description": "This is the zabbix-server which host will connect",
             "type": "string",
-            "changeable":true,
+            "changeable": true,
             "default": "127.0.0.1",
             "required": "no"
         }, {

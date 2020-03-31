@@ -1,4 +1,4 @@
-{{- if eq $myRole "client" }}
+{{- if eq $myRole "kafka-manager" }}
 
 flush > /opt/app/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
 security.protocol=PLAINTEXT

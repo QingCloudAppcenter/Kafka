@@ -58,28 +58,27 @@
 - name: download kafka manager src
   unarchive:
     src: https://github.com/yahoo/cmak/archive/{{ kafka_manager_version }}.zip
-    dest: /tmp
-    creates: /tmp/CMAK-{{ kafka_manager_version }}/sbt
+    dest: files/tmp
+    creates: files/tmp/CMAK-{{ kafka_manager_version }}/sbt
     owner: kafka
     group: kafka
-    remote_src: yes
+  delegate_to: localhost
 
 - name: build kafka manager
   shell: ./sbt dist
   args:
-    chdir: /tmp/CMAK-{{ kafka_manager_version }}
-    creates: /tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    chdir: files/tmp/CMAK-{{ kafka_manager_version }}
+    creates: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     executable: /bin/bash
-    remote_src: yes
+  delegate_to: localhost
 
 - name: install kafka manager binaries
   unarchive:
-    src: /tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    src: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     dest: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}
     owner: kafka
     group: kafka
     creates: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/bin/kafka-manager
-    remote_src: yes
 
 - name: update permissions of service directories
   file:

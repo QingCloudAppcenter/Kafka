@@ -1,8 +1,9 @@
-{{- $myRole := getv "/host/role" }}
+{{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
+{{- $myRole := index $roleMap (getv "/host/role") }}
 {{- $myIp := getv "/host/ip" }}
-{{- $zkPort :=  "2181" }}
+{{- $zkPort := getv "/links/zk_service/cluster/endpoints/client/port" "2181" }}
 
-{{- if eq $myRole "client" }}
+{{- if eq $myRole "kafka-manager" }}
 
 encrypted=$(echo -n {{ getv "/cluster/cluster_id" }}{{ getv "/cluster/user_id" }} | sha256sum | base64)
 

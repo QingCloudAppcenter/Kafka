@@ -11,7 +11,6 @@
     "CPU": "CPU",
     "CPUs of each node": "每个节点的 CPU 数量",
     "Memory": "内存",
-    "Memory of each node": "每个节点的内存大小",
     "Node Class": "节点类型",
     "Kafka Node": "Kafka 节点",
     "Node Count": "节点数量",
