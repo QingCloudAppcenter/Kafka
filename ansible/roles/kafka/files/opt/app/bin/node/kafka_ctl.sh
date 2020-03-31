@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 initNode() {
-  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_INSTALL_VERSION} /opt/kafka/current  # default version 2.11
+  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
   mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
