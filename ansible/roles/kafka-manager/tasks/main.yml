@@ -46,7 +46,7 @@
 
 - name: create symbolic links
   file:
-    src: /opt/{{ item.name }}/{{ item.name }}-{{ item.version }}
+    src: /opt/{{ item.name }}/{{ item.version }}
     dest: /opt/{{ item.name }}/current
     owner: kafka
     group: kafka
@@ -75,10 +75,10 @@
 - name: install kafka manager binaries
   unarchive:
     src: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
-    dest: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}
+    dest: /opt/kafka-manager/{{ kafka_manager_version }}
     owner: kafka
     group: kafka
-    creates: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/bin/kafka-manager
+    creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
 
 - name: update permissions of service directories
   file:
