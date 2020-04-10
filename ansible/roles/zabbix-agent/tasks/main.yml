@@ -34,14 +34,14 @@
 
 - name: download zabbix deb
   unarchive:
-    src: https://repo.zabbix.com/zabbix/3.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.4-1+xenial_all.deb
+    src: https://repo.zabbix.com/zabbix/{{ zabbix }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix }}-1+xenial_all.deb
     dest: /opt/zabbix
     creates: /opt/zabbix/
     remote_src: yes
 
 - name: install zabbix agent
   shell: |
-    dpkg -i zabbix-release_3.4-1+xenial_all.deb
+    dpkg -i zabbix-release_{{ zabbix }}-1+xenial_all.deb
     apt update 
     apt -y install zabbix-agent
   args:

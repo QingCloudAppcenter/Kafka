@@ -42,7 +42,7 @@
     group: kafka
     state: directory
   with_items:
-    - kafka-manager/kafka-manager-{{ kafka_manager_version }}
+    - kafka-manager/{{ kafka_manager_version }}
 
 - name: create symbolic links
   file:
