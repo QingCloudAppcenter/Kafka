@@ -72,13 +72,23 @@
     executable: /bin/bash
   delegate_to: localhost
 
+- name: copy bulit manager
+  copy:
+    src: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    dest: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
+    owner: kafka
+    group: kafka
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
 - name: install kafka manager binaries
   unarchive:
-    src: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    src: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
     dest: /opt/kafka-manager/{{ kafka_manager_version }}
     owner: kafka
     group: kafka
     creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
+    remote_src: yes
 
 - name: update permissions of service directories
   file:
