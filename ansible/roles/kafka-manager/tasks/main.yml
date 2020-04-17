@@ -55,11 +55,16 @@
     - name: kafka-manager
       version: "{{ kafka_manager_version }}"
 
-- name: download kafka manager src
+- name: Download kafka manager src
+  get_url:
+    url: " https://github.com/yahoo/cmak/archive/{{ kafka_manager_version }}.zip"
+    dest: "~/.ansible/tmp/CMAK-{{ kafka_manager_version }}.zip"
+
+- name: unzip kafka manager src
   unarchive:
-    src: https://github.com/yahoo/cmak/archive/{{ kafka_manager_version }}.zip
-    dest: files/tmp
-    creates: files/tmp/CMAK-{{ kafka_manager_version }}/sbt
+    src: "~/.ansible/tmp/CMAK-{{ kafka_manager_version }}.zip"
+    dest: "~/.ansible/tmp"
+    creates: "~/.ansible/tmp/CMAK-{{ kafka_manager_version }}/sbt"
     owner: kafka
     group: kafka
   delegate_to: localhost
@@ -67,14 +72,14 @@
 - name: build kafka manager
   shell: ./sbt dist
   args:
-    chdir: files/tmp/CMAK-{{ kafka_manager_version }}
-    creates: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    chdir: "~/.ansible/tmp/CMAK-{{ kafka_manager_version }}"
+    creates: ~/.ansible/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     executable: /bin/bash
   delegate_to: localhost
 
 - name: copy bulit manager
   copy:
-    src: files/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    src: ~/.ansible/tmp/CMAK-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     dest: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
     owner: kafka
     group: kafka
