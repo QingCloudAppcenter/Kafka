@@ -360,6 +360,7 @@
             "type": "password",
             "changeable": true,
             "default": "password",
+            "pattern": "^([a-zA-Z0-9_!#%^&*()./;]{6,}|)$",
             "required": "yes"
         }, {
             "key": "kafka-manager.port",
