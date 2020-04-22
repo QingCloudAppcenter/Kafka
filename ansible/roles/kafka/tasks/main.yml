@@ -1,8 +1,14 @@
 ---
 - name: set variables
   set_fact:
-    kafka_version: 2.3.0   #实际安装版本
-    scala_version: "2.11"
+    kafka_version: 2.3.1   #实际安装版本
+    scala_versions:
+    - 2.11
+    - 2.12
+
+- name: install confd files
+  include_role:
+    name: confd-files-1.0.2
 
 - name: copy systemd files
   copy: #拷贝service文件
@@ -33,11 +39,15 @@
     groups: kafka
     shell: /sbin/nologin
     create_home: no
-    home: "/opt/kafka/current"
     append: yes
     comment: "Service User"
     state: present
 
+- name: install tools
+  apt:
+    update_cache: yes
+    name: ['openjdk-8-jdk','unzip','arping']
+    state: present
 
 - name: copy binaries
   copy: #拷贝service文件
@@ -48,67 +58,34 @@
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
-- name: prepare service directories
-  file:
-    path: /opt/{{ item }}
-    owner: kafka
-    group: kafka
-    state: directory
-  with_items:
-    - kafka/{{ kafka_version }}
-
-- name: create symbolic links
-  file:
-    src: /opt/{{ item.name }}/{{ item.version }}
-    dest: /opt/{{ item.name }}/current
-    owner: kafka
-    group: kafka
-    state: link
-  with_items:
-    - name: kafka
-      version: "{{ kafka_version }}"
-
-- name: download Kafka
-  get_url:
-    url: https://archive.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz
-    dest: files/tmp/kafka-{{ kafka_version }}.tgz
-  delegate_to: localhost
-
 - name: install kafka
-  unarchive:
-    src: files/tmp/kafka-{{ kafka_version }}.tgz
-    dest: /opt/kafka/{{ kafka_version }}
-    owner: kafka
-    group: kafka
-    creates: /opt/kafka/{{ kafka_version }}/bin/kafka-server-start.sh
-    extra_opts: [ '--strip-components=1' ]
+  include_role:
+    name: install-1.0.5
+  vars:
+    opts:
+      pkg_name: kafka
+      pkg_version: "{{ item }}-{{ kafka_version }}"
+      pkg_type: tgz
+      pkg_url: "https://archive.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ item }}-{{ kafka_version }}.tgz"
+      extracts: yes
+      creates: "bin/kafka-server-start.sh"
+      target_owner: kafka
+      target_group: kafka
+      bin_path:
+  with_items: "{{ scala_versions }}"
 
 - name: install statsd metrics
   copy:
     src: ../deps/kafka-statsd-metrics2-master-0.4.0.jar
-    dest: /opt/kafka/current/libs
+    dest: /opt/kafka/{{ item }}-{{ kafka_version }}/libs
     owner: kafka
     group: kafka
-
-- name: update permissions of service directories
-  file:
-    path: /opt/{{ item }}
-    owner: kafka
-    group: kafka
-    recurse: yes
-    state: directory
-  with_items:
-    - kafka
-
-- name: add Kafka commands to system-wide $PATH
-  copy:
-    dest: /etc/profile.d/kafka-path.sh
-    content: 'PATH=$PATH:/opt/kafka/current/bin'
+  with_items: "{{ scala_versions }}"
 
 - name: set up version env
   copy:
-    dest: /opt/app/bin/version.env
-    content: KAFKA_VERSION=2.2.0      #因为kafka manager支持的最大的kafka版本为2.2.0，实测2.3.0也可使用
+    dest: /opt/app/bin/envs/version.env
+    content: |
+      KAFKA_VERSION_4_MANAGER=2.2.0      #因为 cmak 支持的kafka版本为2.2.0 2.4.0，无 2.3.0， 实测2.3.0也可使用
+      KAFKA_VERSION={{ kafka_version }}
 
-- name: install confd files
-  include_tasks: ../../utils/tasks/process-confd-files.yml

@@ -1,9 +1,0 @@
-cat > /opt/app/conf/caddy/Caddyfile << CADDYFILE_EOF
-{{ $myIp }}:80 {
-  root /data/{{ $myRole }}
-  gzip
-  browse
-  tls off
-}
-CADDYFILE_EOF
-

@@ -2,13 +2,19 @@
 - name: common setup
   hosts: all
   strategy: free
-
+  vars:
+    target_env: "{{ lookup('env', 'target') }}"
+    local_cache_path: "~/.ansible/cache"
   tasks:
   - include_role:
       name: "{{ service_name }}"
     loop:
-    - appctl
-    - caddy
+    - disable-apt-jobs-1.0.0
+    - disable-motd-1.0.0
+    - app-agent-1.0.1
+    - appctl-1.0.9
+    - arping-1.0.0
+    - caddy-1.0.6
     - kafka
     - kafka-manager
     - zabbix-agent

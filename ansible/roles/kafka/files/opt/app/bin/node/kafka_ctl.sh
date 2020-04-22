@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-init() {
-  _init
+initNode() {
+  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
+  _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
   mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
-  touch    /data/zabbix/logs/zabbix_agentd.log
   chown -R zabbix.zabbix /data/zabbix
-  chown -R kafka.kafka /data/$MY_ROLE  
+  chown -R kafka.kafka /data/$MY_ROLE
   local htmlFile=/data/$MY_ROLE/index.html
   [ -e "$htmlFile" ] || ln -s /opt/app/conf/caddy/index.html $htmlFile
-  ln -s /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
 }
 
 
@@ -17,12 +17,13 @@ start() {
   _start
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
-    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'."
+    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'.";
+    updateCluster || log "Failed to updateCluster when update";
   fi
 }
 
-update() {
-  _update $@
+reload() {
+  _reload $@
   if [ "$MY_ROLE" == "kafka-manager" ]; then
     addCluster || log "Failed to addCluster when update";
     updateCluster || log "Failed to updateCluster when update";
@@ -61,7 +62,7 @@ parseMetrics() {
 
 checkKafkaManager() {
   . /opt/app/bin/envs/appctl.env
-  curl "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
+  curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
 }
 
 addCluster() {
@@ -81,7 +82,7 @@ buildParams() {
   local params="
   name=$CLUSTER_ID
   zkHosts=$ZK_HOSTS
-  kafkaVersion=$KAFKA_VERSION
+  kafkaVersion=$KAFKA_VERSION_4_MANAGER
   jmxEnabled=true
   jmxUser=""
   jmxPass=""

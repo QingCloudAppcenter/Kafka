@@ -11,14 +11,13 @@
     "CPU": "CPU",
     "CPUs of each node": "每个节点的 CPU 数量",
     "Memory": "内存",
-    "Memory of each node": "每个节点的内存大小",
-	  "Node Class": "节点类型",
-	  "Kafka Node": "Kafka 节点",
-	  "Node Count": "节点数量",
+    "Node Class": "节点类型",
+    "Kafka Node": "Kafka 节点",
+    "Node Count": "节点数量",
     "count": "个",
     "count/sec": "个/秒",
     "Number of nodes for the cluster to create": "要创建的节点数量",
-	  "Volume Size": "存储容量",
+    "Volume Size": "存储容量",
     "The volume size for each node": "每个节点的存储容量",
     "instance class": "实例类型",
     "The instance type for the cluster to run, such as high performance, high performance plus": "节点实例类型，比如性能型与超高性能型。",
@@ -78,5 +77,7 @@
     "The time interval at which leaders will remove followers from isr": "leader会将follower从isr中删除的时间间隔",
     "The maximum allowed session timeout for registered consumers": "已注册消费者最长会话超时时长",
     "The minimum allowed session timeout for registered consumers": "已注册消费者最短会话超时时长",
-    "notice_when_upgrade": "此版本包含不兼容 Kafka 1.x 版本的改动，可能会导致业务代码异常退出并无法回退！为避免损失，强烈建议先创建一个新集群进行验证，确保可以工作以后再进行升级操作。Kafka 2.3 版本说明请查看官方文档：https://kafka.apache.org/documentation/"
+    "notice_when_upgrade": "此版本包含不兼容 Kafka 1.x 版本的改动，可能会导致业务代码异常退出并无法回退！为避免损失，强烈建议先创建一个新集群进行验证，确保可以工作以后再进行升级操作。Kafka 2.3 版本说明请查看官方文档：https://kafka.apache.org/documentation/",
+    "kafka.scala.version": "kafka 实例使用的 Scala 版本",
+    "The scala version of kafka instance used": "kafka 实例使用的 Scala 版本, 默认为 2.11，推荐使用 2.12"
   }

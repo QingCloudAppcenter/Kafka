@@ -64,8 +64,8 @@
                 "type": "integer",
                 "default": 3,
                 "auto_scale_step": 1,
-                 "min":1,
-                 "max":200,
+                "min": 1,
+                "max": 200,
                 "required": "yes"
             }, {
                 "key": "instance_class",
@@ -80,7 +80,7 @@
                 "label": "Volume Size",
                 "description": "The volume size for each instance",
                 "type": "integer",
-                 "auto_scale_step": 10,
+                "auto_scale_step": 10,
                 "default": 30,
                 "required": "yes"
             }]
@@ -111,8 +111,8 @@
             "description": "Number of nodes for the cluster to create",
             "type": "integer",
             "default": 1,
-             "min":0,
-             "max":20,
+            "min": 0,
+            "max": 20,
             "required": "yes"
         }, {
             "key": "instance_class",
@@ -358,15 +358,16 @@
             "label": "kafka-manager.basicAuthentication.password",
             "description": "This is the password that log in kafka-manager",
             "type": "password",
-            "changeable":true,
+            "changeable": true,
             "default": "password",
+            "pattern": "^([a-zA-Z0-9_!#%^&*()./;]{6,}|)$",
             "required": "yes"
         }, {
             "key": "kafka-manager.port",
             "label": "kafka-manager.port",
             "description": "This is the kafka-manager http port",
             "type": "integer",
-            "changeable":true,
+            "changeable": true,
             "default": 9000,
             "required": "no"
         }, {
@@ -382,7 +383,7 @@
             "label": "zabbix.server.ip",
             "description": "This is the zabbix-server which host will connect",
             "type": "string",
-            "changeable":true,
+            "changeable": true,
             "default": "127.0.0.1",
             "required": "no"
         }, {
@@ -421,6 +422,15 @@
             "min": 0,
             "max": 60000,
             "required": "no"
+        }, {
+            "key": "kafka.scala.version",
+            "label": "kafka.scala.version",
+            "description": "The scala version of kafka instance used",
+            "default": "2.11",
+            "type": "string",
+            "range": ["2.11", "2.12"],
+            "changeable": false,
+            "required": "yes"
         }]
     }]
 }

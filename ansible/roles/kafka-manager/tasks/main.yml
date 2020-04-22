@@ -1,9 +1,12 @@
 ---
 - name: setvariables
   set_fact:
-    kafka_manager_version: 2.0.0.2 #latest
-    kafka_version: 2.3.0   #实际安装版本
+    kafka_manager_version: "2.0.0.2"
     scala_version: "2.11"
+
+- name: install confd files
+  include_role:
+    name: confd-files-1.0.2
 
 - name: copy systemd files
   copy: #拷贝service文件
@@ -41,7 +44,6 @@
   with_items:
     - kafka-manager/{{ kafka_manager_version }}
 
-
 - name: create symbolic links
   file:
     src: /opt/{{ item.name }}/{{ item.version }}
@@ -53,42 +55,47 @@
     - name: kafka-manager
       version: "{{ kafka_manager_version }}"
 
-- name: prepare kafka manager directory
-  file:
-    path: files/tmp/kafka-manager-{{ kafka_manager_version }}
-    state: directory
-  delegate_to: localhost
-
-- name: download kafka manager src
-  unarchive:
-    src: https://github.com/yahoo/kafka-manager/archive/{{ kafka_manager_version }}.zip
-    dest: files/tmp
-    creates: files/tmp/kafka-manager-{{ kafka_manager_version }}/sbt
-    remote_src: yes
-  delegate_to: localhost
+- name: install manager 
+  include_role:
+    name: install-1.0.5
+  vars:
+    opts:
+      pkg_name: "{{ item  }}"
+      pkg_version: "{{ kafka_manager_version }}"
+      pkg_type: zip
+      pkg_url: "https://github.com/yahoo/CMAK/archive/{{ kafka_manager_version }}.zip"
+      extracts: yes
+      dest_path: "~/.ansible/cache/{{ item  }}/"
+      creates: "~/.ansible/cache/{{ item  }}/{{ item  }}-{{ kafka_manager_version }}/sbt"
+      bin_path:
+  with_items: 
+    - kafka-manager
 
 - name: build kafka manager
   shell: ./sbt dist
   args:
-    chdir: files/tmp/kafka-manager-{{ kafka_manager_version }}
-    creates: files/tmp/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    chdir: "~/.ansible/cache/kafka-manager/kafka-manager-{{ kafka_manager_version }}/"
+    creates: ~/.ansible/cache/kafka-manager/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     executable: /bin/bash
   delegate_to: localhost
 
+- name: copy bulit manager
+  copy:
+    src: ~/.ansible/cache/kafka-manager/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
+    dest: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
+    owner: kafka
+    group: kafka
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
 - name: install kafka manager binaries
   unarchive:
-    src: files/tmp/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
-    dest: /opt/kafka-manager
+    src: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
+    dest: /opt/kafka-manager/{{ kafka_manager_version }}
     owner: kafka
     group: kafka
     creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
-
-- name: align kafka manager layout
-  shell: |
-    cp -r /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/* /opt/kafka-manager/{{ kafka_manager_version }}/
-    rm -rf /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}
-  args:
-    creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
+    remote_src: yes
 
 - name: update permissions of service directories
   file:
@@ -99,12 +106,4 @@
     state: directory
   with_items:
     - kafka-manager
-
-- name: add Kafka commands to system-wide $PATH
-  copy:
-    dest: /etc/profile.d/kafka-path.sh
-    content: 'PATH=$PATH:/opt/kafka/current/bin'
-
-- name: install confd files
-  include_tasks: ../../utils/tasks/process-confd-files.yml
 

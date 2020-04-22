@@ -1,0 +1,12 @@
+{{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
+{{- $myRole := index $roleMap (getv "/host/role") }}
+{{- $myIp := getv "/host/ip" }}
+flush > /opt/app/conf/caddy/Caddyfile << CADDYFILE_EOF
+{{ $myIp }}:80 {
+  root /data/{{ $myRole }}
+  gzip
+  browse
+  tls off
+}
+CADDYFILE_EOF
+

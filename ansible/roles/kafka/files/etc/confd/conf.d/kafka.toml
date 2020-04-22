@@ -1,8 +1,0 @@
-[template]
-src = "kafka.sh.tmpl"
-dest = "/opt/app/bin/tmpl/kafka.sh"
-mode = "0600"
-keys = [
-  "/",
-]
-reload_cmd = "/opt/app/bin/tmpl/kafka.sh; /opt/app/bin/ctl.sh update kafka"
