@@ -19,7 +19,6 @@
     "count": "count",
     "Number of nodes for the cluster to create": "Number of nodes for the cluster to create",
     "instance class": "instance class",
-    "The instance type for the cluster to run, such as high performance, high performance plus": "The instance type for the cluster to run, such as high performance, high performance plus",
     "JVM Heap": "JVM Heap",
     "Message Throughput": "Message Throughput",
     "Data Throughput": "Data Throughput",
