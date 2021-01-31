@@ -1,0 +1,20 @@
+[Unit]
+Description=Yahoo Kafka Manager
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target
+After=network.target
+
+[Service]
+RuntimeDirectory=cmak
+PrivateTmp=true
+Type=simple
+User=kafka
+Group=svc
+LimitNOFILE=500000
+WorkingDirectory=/data/kafka-manager
+EnvironmentFile=/opt/app/current/conf/cmak/.env
+ExecStart=/opt/cmak/current/bin/cmak $KAFKA_MANAGER_OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

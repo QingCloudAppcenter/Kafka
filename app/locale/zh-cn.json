@@ -78,5 +78,14 @@
     "The minimum allowed session timeout for registered consumers": "已注册消费者最短会话超时时长",
     "notice_when_upgrade": "此版本包含不兼容 Kafka 1.x 版本的改动，可能会导致业务代码异常退出并无法回退！为避免损失，强烈建议先创建一个新集群进行验证，确保可以工作以后再进行升级操作。Kafka 2.3 版本说明请查看官方文档：https://kafka.apache.org/documentation/",
     "kafka.scala.version": "kafka 实例使用的 Scala 版本",
-    "The scala version of kafka instance used": "kafka 实例使用的 Scala 版本, 默认为 2.11，推荐使用 2.12"
+    "The scala version of kafka instance used": "kafka 实例使用的 Scala 版本, 默认为 2.12，推荐使用 2.13",
+    "gen_cert_for_user_server": "生成client证书",
+    "user_server": "客户端 IP",
+    "The user server info": "Producer/Consumer 的 IP, 生成的证书见 http://kafka-node-ip:80 或文档说明",
+    "password": "证书密码",
+    "The password for cert": "生产的证书密码（默认：qingcloud）",
+    "enable_ssl": "开启外网 SSL 访问",
+    "use_ssl": "是否使用SSL",
+    "err_code201": "EIP 数量需要和 Kafka 角色节点个数一致，请确认后重试",
+    "The flag for is use ssl": "默认为开启外网 SSL，内网 PLAIN，否则为开启内外网访问模式均为 PLAIN"
   }

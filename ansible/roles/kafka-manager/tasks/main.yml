@@ -6,32 +6,14 @@
 
 - name: install confd files
   include_role:
-    name: confd-files-1.0.2
-
-- name: copy systemd files
-  copy: #拷贝service文件
-    src: files/{{ item }}
-    dest: /{{ item }}
-    directory_mode: yes
-  with_items:
-    - lib/systemd/system/
-
-- name: disable auto start
-  systemd:
-    name: "{{ svc_name }}"
-    state: stopped
-    masked: yes
-  loop:
-  - kafka-manager
-  loop_control:
-    loop_var: svc_name
+    name: confd-files-1.0.9
 
 - name: copy binaries
-  copy: #拷贝service文件
-    src: files/opt/
-    dest: /opt
+  copy:
+    src: "{{ role_path }}/files/opt/app/"
+    dest: /opt/app/
     owner: root
-    group: kafka
+    group: svc
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
@@ -39,21 +21,10 @@
   file:
     path: /opt/{{ item }}
     owner: kafka
-    group: kafka
+    group: svc
     state: directory
   with_items:
-    - kafka-manager/{{ kafka_manager_version }}
-
-- name: create symbolic links
-  file:
-    src: /opt/{{ item.name }}/{{ item.version }}
-    dest: /opt/{{ item.name }}/current
-    owner: kafka
-    group: kafka
-    state: link
-  with_items:
-    - name: kafka-manager
-      version: "{{ kafka_manager_version }}"
+    - kafka-manager
 
 - name: install manager 
   include_role:
@@ -84,24 +55,37 @@
     src: ~/.ansible/cache/kafka-manager/kafka-manager-{{ kafka_manager_version }}/target/universal/kafka-manager-{{ kafka_manager_version }}.zip
     dest: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
     owner: kafka
-    group: kafka
+    group: svc
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
 - name: install kafka manager binaries
   unarchive:
     src: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
-    dest: /opt/kafka-manager/{{ kafka_manager_version }}
+    dest: "/opt/kafka-manager"
     owner: kafka
-    group: kafka
-    creates: /opt/kafka-manager/{{ kafka_manager_version }}/bin/kafka-manager
+    group: svc
     remote_src: yes
+
+- name: prepare service directories
+  shell: mv  /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }} /opt/kafka-manager/{{ kafka_manager_version }}
+
+- name: create symbolic links
+  file:
+    src: /opt/{{ item.name }}/{{ item.version }}
+    dest: /opt/{{ item.name }}/current
+    owner: kafka
+    group: svc
+    state: link
+  with_items:
+    - name: kafka-manager
+      version: "{{ kafka_manager_version }}"
 
 - name: update permissions of service directories
   file:
     path: /opt/{{ item }}
     owner: kafka
-    group: kafka
+    group: svc
     recurse: yes
     state: directory
   with_items:

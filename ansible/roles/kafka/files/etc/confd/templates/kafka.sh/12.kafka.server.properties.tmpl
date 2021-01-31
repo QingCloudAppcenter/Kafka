@@ -1,6 +1,6 @@
 {{- if eq $myRole "kafka" }}
 
-flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
+flush  /opt/app/current/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
 # fixed params
 broker.id={{ getv "/host/sid" }}
 broker.rack={{ getv "/host/zone" (getv "/cluster/zone") }}
@@ -36,6 +36,7 @@ external.kafka.statsd.port=8125
 external.kafka.statsd.reporter.enabled=true
 kafka.metrics.reporters=com.airbnb.kafka.KafkaStatsdMetricsReporter
 queued.max.requests=500
+
 KAFKA_SERVER_PROPERTIES_EOF
 
 {{- end }}

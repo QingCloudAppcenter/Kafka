@@ -18,7 +18,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-20a2vume"
+      "image": "img-6sl1v0fv"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -40,6 +40,24 @@
       },
       "restart": {
         "cmd": "appctl restart"
+      },
+      "gen_cert_for_user_server": {
+        "type": "custom",
+        "nodes_to_execute_on": 1,
+        "cmd": "appctl genCertForUserServer",
+        "timeout": 1200,
+        "service_params": {
+          "user_server_info": {{service_params.user_server}},
+          "cert_password": {{service_params.password}}
+        }
+      },
+      "enable_ssl": {
+        "type": "custom",
+        "cmd": "appctl enableSslForUserServer",
+        "timeout": 1200,
+        "service_params": {
+          "use_ssl": {{service_params.use_ssl}}
+        }
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -99,7 +117,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-20a2vume"
+      "image": "img-6sl1v0fv"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -174,7 +192,11 @@
   },
   "endpoints": {
     "client": {
-      "port": "env.advertised.port",
+      "port": "9092",
+      "protocol": "tcp"
+    },
+    "client-ssl": {
+      "port": "9093",
       "protocol": "tcp"
     },
     "kafka-manager": {

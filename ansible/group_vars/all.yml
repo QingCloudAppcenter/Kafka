@@ -1,0 +1,4 @@
+app_version: 2.1.0
+local_cache_path: "~/.ansible/cache"
+cmak_version: "3.0.0.5"
+

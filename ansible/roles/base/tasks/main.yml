@@ -1,0 +1,14 @@
+---
+- name: generate ca for kafka ssl
+  shell: mkdir ca; openssl req -new -newkey rsa:4096 -days 365 -x509 -subj "/CN=Kafka-Security-CA" -keyout ./ca/ca-key -out ./ca/ca-cert -nodes
+  args:
+    chdir: "/opt/app/current/conf/appctl"
+    creates: "/opt/app/current/conf/appctl/ca/ca-key"
+    executable: /bin/bash
+
+- name: install tools
+  apt:
+    update_cache: yes
+    name: ['jq']
+    state: present
+
