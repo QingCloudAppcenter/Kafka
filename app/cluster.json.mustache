@@ -8,9 +8,7 @@
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
     "appv-7o37pk3b",
-    "appv-3w7cnjir",
-    "appv-vx6yl2x5",
-    "appv-t2pkfxjs"
+    "appv-3ra1bq95"
   ],
   "upgrading_policy": "parallel",
   "nodes": [{
@@ -18,7 +16,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-6sl1v0fv"
+      "image": "img-i01wjhb6"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -30,13 +28,24 @@
       "filesystem": "xfs"
     },
     "services": {
+      "init": {
+        "order": 1,
+        "cmd": "appctl init",
+        "timeout": 180
+      },
       "start": {
         "cmd": "appctl start",
-        "order": 1
+        "order": 2
       },
       "stop": {
         "cmd": "appctl stop",
-        "order": 2
+        "order": 3
+      },
+      "scale_in": {
+        "nodes_to_execute_on": 1,
+        "pre_check": "appctl preCheckForScaleIn",
+        "cmd": "appctl scaleIn",
+        "timeout": 90
       },
       "restart": {
         "cmd": "appctl restart"
@@ -49,14 +58,6 @@
         "service_params": {
           "user_server_info": {{service_params.user_server}},
           "cert_password": {{service_params.password}}
-        }
-      },
-      "enable_ssl": {
-        "type": "custom",
-        "cmd": "appctl enableSslForUserServer",
-        "timeout": 1200,
-        "service_params": {
-          "use_ssl": {{service_params.use_ssl}}
         }
       }
     },
@@ -117,7 +118,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-6sl1v0fv"
+      "image": "img-i01wjhb6"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -131,7 +132,7 @@
     "services": {
       "start": {
         "cmd": "appctl start",
-        "order": 2
+        "order": 3
       },
       "stop": {
         "cmd": "appctl stop",
@@ -188,7 +189,10 @@
     "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
     "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
     "kafka-manager.port": {{env.kafka-manager.port}},
-    "kafka.scala.version": {{env.kafka.scala.version}}
+    "kafka.scala.version": {{env.kafka.scala.version}},
+    "web.console.enabled": {{env.web.console.enabled}},
+    "web.console.username": {{env.web.console.username}},
+    "web.console.password": {{env.web.console.password}}
   },
   "endpoints": {
     "client": {

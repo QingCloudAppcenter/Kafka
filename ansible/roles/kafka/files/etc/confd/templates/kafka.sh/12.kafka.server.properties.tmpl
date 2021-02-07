@@ -1,5 +1,13 @@
 {{- if eq $myRole "kafka" }}
 
+{{ $eipCount := 0 }}
+{{ $nodeCount := 0 }}
+{{- range $instanceId := lsdir (printf "/hosts/%s" $myRole) }}
+{{- $nodeEip := getv (printf "/hosts/%s/%s/eip" $myRole $instanceId) }}
+{{ $nodeCount = add 1 $nodeCount }}
+{{- if $nodeEip }}{{ $eipCount = add 1 $eipCount }}{{ end }}
+{{- end }}
+
 flush  /opt/app/current/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
 # fixed params
 broker.id={{ getv "/host/sid" }}
@@ -36,6 +44,22 @@ external.kafka.statsd.port=8125
 external.kafka.statsd.reporter.enabled=true
 kafka.metrics.reporters=com.airbnb.kafka.KafkaStatsdMetricsReporter
 queued.max.requests=500
+
+{{ if $myEip }}
+listener.security.protocol.map=INSIDE:PLAINTEXT,OUTSIDE:SSL
+#security.inter.broker.protocol=INSIDE
+inter.broker.listener.name=INSIDE
+listeners=INSIDE://:9092,OUTSIDE://:9093
+advertised.listeners=OUTSIDE://{{ $myEip }}:9093,INSIDE://{{ $myIp }}:9092
+#enable.ssl.certificate.verification=false
+ssl.endpoint.identification.algorithm=
+#ssl.client.auth=required
+ssl.truststore.location=/data/kafka/ssl/{{ $myEip }}/kafka.server.truststore.jks
+ssl.keystore.location=/data/kafka/ssl/{{ $myEip }}/kafka.server.keystore.jks
+ssl.truststore.password=qingcloud
+ssl.keystore.password=qingcloud
+ssl.key.password=qingcloud
+{{- end  }}
 
 KAFKA_SERVER_PROPERTIES_EOF
 

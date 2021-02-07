@@ -2,21 +2,46 @@
 
 EC_UNCORDON_FAILED=200
 EC_INSUFFICIENT_EIP=201
+EC_DELETE_FIRST_NODE=202
 
 initNode() {
   if [[  "${KAFKA_SCALA_VERSION}" == "2.11" ]]; then KAFKA_SCALA_VERSION="2.12"; fi
   ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.12
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
-  mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
+  mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs,ca}
   chown -R zabbix.zabbix /data/zabbix
   local htmlFile=/data/$MY_ROLE/index.html
   [ -e "$htmlFile" ] || ln -s /opt/app/current/conf/caddy/index.html $htmlFile
-  chown -R kafka.svc /data/$MY_ROLE
   ln -sf /opt/app/current/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  scpCaFromFirstNode
+  chown -R kafka.svc /data/$MY_ROLE
+}
+
+scpCaFromFirstNode(){
+  if [[ "${JOINING_NODES}" =~ "${MY_INSTANCE_ID}" ]]; then
+    local firstNodeIp; firstNodeIp="$(echo "${KAFKA_NODES}" | awk -F/ '{print $6}')";
+    for i in ca-key ca-cert; do
+      curl -s -o /data/kafka/ca/${i} http://${firstNodeIp}/ca/${i}
+    done
+  fi
+}
+
+initCluster(){
+  local firstNode; firstNode="$(echo "${KAFKA_NODES}" | awk '{print $1}')";
+  if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
+    local caStorePath="/data/kafka/ca"
+    mkdir -p ${caStorePath};
+    chown -R kafka.svc ${caStorePath};
+    openssl req -new -newkey rsa:4096 -days 365 -x509 -subj "/CN=Kafka-Security-CA" -keyout ${caStorePath}/ca-key -out ${caStorePath}/ca-cert -nodes
+  fi
 }
 
 start() {
+  if [ "$MY_ROLE" == "kafka" ]; then
+    local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
+    genCertForUserServer "$json"
+  fi
   _start
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
@@ -33,16 +58,34 @@ reload() {
   fi
 }
 
+preCheckForScaleIn(){
+  local firstNode; firstNode="$(echo "${KAFKA_NODES}"  | awk -F/ '{print $4}')";
+  if [[ "${LEAVING_NODES}" =~ "${firstNode}" ]]; then
+    exit $EC_DELETE_FIRST_NODE
+  fi
+}
+
+scaleIn(){
+  log "${LEAVING_NODES} deleted in $(date)."
+}
+
+scaleOut(){
+  local firstNode; firstNode="$(echo "${KAFKA_NODES}" | awk '{print $1}')";
+  if [[ "${JOINING_NODES}" =~ "kafka" ]] && [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
+    _startSvc caddy
+  fi
+}
+
 check() {
   _check
-  if [ "$MY_ROLE" = "kafka-manager" ]; then
+  if [[ "$MY_ROLE" = "kafka-manager" ]]; then
     checkKafkaManager
   fi
 }
 
 measure() {
   local metrics; metrics=$(echo mntr | nc -u -q3 -w3 127.0.0.1 8125)
-  [ -n "$metrics" ] || return 1
+  [[ -n "$metrics" ]] || return 1
 
   cat << METRICS_EOF
   {
@@ -120,10 +163,10 @@ buildParams() {
 genCertForUserServer(){
   local server="$(echo $1 | jq -r .user_server_info)" certPwd="$(echo $1 | jq -r .cert_password)"
   local serverStorePath="/data/kafka/ssl/${server:-localhost}"
-  local caStorePath="/opt/app/current/conf/appctl/ca"
+  local caStorePath="/data/kafka/ca"
   mkdir -p ${serverStorePath}
   rm -rf ${serverStorePath}/* # in case user change password
-  echo "ssl.truststore.location --->  ${server:-localhost}/kafka.server.truststore.jks ;  ssl.truststore.password ---> ${certPwd:-qingcloud} " > /data/kafka/ssl/README
+  echo "ssl.truststore.location --->  ${server:-localhost}/kafka.server.truststore.jks ;  ssl.truststore.password ---> ${certPwd:-qingcloud} " > /data/kafka/ssl/${server:-localhost}/README
   keytool -keystore ${serverStorePath}/kafka.server.keystore.jks -alias ${server:-localhost} -validity 3650  -genkey -keyalg RSA -ext SAN=DNS:${server} -storepass "${certPwd:-qingcloud}" -keypass "${certPwd:-qingcloud}"  -storetype pkcs12 -dname "CN=${server:-localhost}"
   keytool -keystore ${serverStorePath}/kafka.server.truststore.jks  -alias CARoot -importcert -file ${caStorePath}/ca-cert  -storepass ${certPwd:-qingcloud} -keypass ${certPwd:-qingcloud} -noprompt
   keytool -keystore ${serverStorePath}/kafka.server.keystore.jks -alias ${server:-localhost} -certreq -file ${serverStorePath}/server-cert-request-file -storepass ${certPwd:-qingcloud} -keypass ${certPwd:-qingcloud}
@@ -132,53 +175,4 @@ genCertForUserServer(){
   keytool -keystore ${serverStorePath}/kafka.server.keystore.jks -alias ${server:-localhost}  -importcert -file ${serverStorePath}/server-cert-request-signed-file -storepass ${certPwd:-qingcloud} -keypass ${certPwd:-qingcloud} -noprompt
   chmod -R 750 ${serverStorePath}
   chown -R kafka.svc /data/$MY_ROLE
-}
-
-flush() {
-  local targetFile=$1
-  if [ -n "$targetFile" ]; then
-    cat > $targetFile -
-  else
-    cat -
-  fi
-}
-
-addSslConfigToServerProperties(){
-  sslFile="/opt/app/current/conf/kafka/server.properties"
-  sed "/^# >> KAFKA SSL./,/^# << KAFKA SSL./d" $sslFile > $sslFile.swap
-  if [[ "${1:-true}" == "true" ]]; then outsideProtocal=SSL; else outsideProtocal=PLAINTEXT; fi
-
-flush >> $sslFile.swap << SSL_FILE
-# >> KAFKA SSL. WARNING: this is managed by script and please don't touch manually.
-listener.security.protocol.map=INSIDE:PLAINTEXT,OUTSIDE:${outsideProtocal:-SSL}
-#security.inter.broker.protocol=INSIDE
-inter.broker.listener.name=INSIDE
-listeners=INSIDE://:9092,OUTSIDE://:9093
-advertised.listeners=OUTSIDE://${MY_EIP:-${MY_IP}}:9093,INSIDE://${MY_IP}:9092
-#enable.ssl.certificate.verification=false
-ssl.endpoint.identification.algorithm=
-#ssl.client.auth=required
-ssl.truststore.location=/data/kafka/ssl/${2:-localhost}/kafka.server.truststore.jks
-ssl.keystore.location=/data/kafka/ssl/${2:-localhost}/kafka.server.keystore.jks
-ssl.truststore.password=qingcloud
-ssl.keystore.password=qingcloud
-ssl.key.password=qingcloud
-# << KAFKA SSL. WARNING: this is managed by script and please don't touch manually.
-SSL_FILE
-  mv $sslFile.swap $sslFile
-}
-
-enableSslForUserServer(){
-  local useSsl="$(echo $1 | jq -r .use_ssl)"
-  local eipNodes=$(echo ${STABLE_NODES} | xargs -n1 | awk -F/ '$2=="kafka" && $7!="noEip"' | xargs | wc -w)
-  local kafkaNodes=$(echo ${STABLE_NODES} | xargs -n1 | awk -F/ '$2=="kafka"' | xargs | wc -w)
-  if [[ ${eipNodes:-0} == ${kafkaNodes} ]]; then
-    local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
-    genCertForUserServer "$json"
-    addSslConfigToServerProperties ${useSsl} ${MY_EIP:-${MY_IP}}
-    _reload
-    echo "Enabled ssl in "$(date) >> /data/appctl/data/ssl.enabled;
-  else
-    exit $EC_INSUFFICIENT_EIP
-  fi
 }

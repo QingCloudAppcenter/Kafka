@@ -150,15 +150,7 @@
       "type": "string",
       "default": "qingcloud", 
       "required": "no"
-    }, {
-        "key": "use_ssl",
-        "label": "use_ssl",
-        "description": "The flag for is use ssl",
-        "type": "boolean",
-        "default": true,
-        "range": [true, false],
-        "required": "no"
-      }]
+    }]
   }, {
         "key": "env",
         "description": "Kafka service properties",
@@ -459,6 +451,29 @@
             "range": ["2.12", "2.13"],
             "changeable": false,
             "required": "yes"
+        }, {
+            "key": "web.console.enabled",
+            "label": "Enable web console",
+            "description": "enable or not for web console",
+            "type": "boolean",
+            "default": true,
+            "required": "no"
+        }, {
+            "key": "web.console.username",
+            "label": "Admin Username",
+            "description": "username of admin web console",
+            "type": "string",
+            "pattern": "^([a-z0-9.-]+)?$",
+            "default": "admin",
+            "required": "no"
+        }, {
+            "key": "web.console.password",
+            "label": "Admin Password",
+            "description": "password of admin web console",
+            "type": "password",
+            "pattern": "^\\w{0,24}$",
+            "default": "",
+            "required": "no"
         }]
     }]
 }
