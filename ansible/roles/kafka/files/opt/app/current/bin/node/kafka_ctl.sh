@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-EC_UNCORDON_FAILED=200
-EC_INSUFFICIENT_EIP=201
-EC_DELETE_FIRST_NODE=202
+EC_UNCORDON_FAILED=100
+EC_INSUFFICIENT_EIP=101
+EC_DELETE_FIRST_NODE=102
 
 initNode() {
   if [[  "${KAFKA_SCALA_VERSION}" == "2.11" ]]; then KAFKA_SCALA_VERSION="2.12"; fi
@@ -14,13 +14,19 @@ initNode() {
   local htmlFile=/data/$MY_ROLE/index.html
   [ -e "$htmlFile" ] || ln -s /opt/app/current/conf/caddy/index.html $htmlFile
   ln -sf /opt/app/current/bin/node/kfkctl.sh  /usr/bin/kfkctl
-  scpCaFromFirstNode
+  local retCd; retCd="$(retry 5 2 0 scpCaFromFirstNode)"
+  [[ "${retCd}" == "0" ]] || log "Failed to cp ca from first node"
+  if [ "$MY_ROLE" == "kafka" ]; then
+    local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
+    genCertForUserServer "$json"
+  fi
   chown -R kafka.svc /data/$MY_ROLE
 }
 
 scpCaFromFirstNode(){
   if [[ "${JOINING_NODES}" =~ "${MY_INSTANCE_ID}" ]]; then
-    local firstNodeIp; firstNodeIp="$(echo "${KAFKA_NODES}" | awk -F/ '{print $6}')";
+    local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+    local firstNodeIp; firstNodeIp="$( echo ${firstNode} | awk -F/ '{print $6}')";
     for i in ca-key ca-cert; do
       curl -s -o /data/kafka/ca/${i} http://${firstNodeIp}/ca/${i}
     done
@@ -28,7 +34,7 @@ scpCaFromFirstNode(){
 }
 
 initCluster(){
-  local firstNode; firstNode="$(echo "${KAFKA_NODES}" | awk '{print $1}')";
+  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
   if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
     local caStorePath="/data/kafka/ca"
     mkdir -p ${caStorePath};
@@ -38,10 +44,6 @@ initCluster(){
 }
 
 start() {
-  if [ "$MY_ROLE" == "kafka" ]; then
-    local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
-    genCertForUserServer "$json"
-  fi
   _start
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
@@ -51,7 +53,30 @@ start() {
 }
 
 reload() {
-  _reload $@
+  if [ "$MY_ROLE" == "kafka" ]; then
+    local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
+    genCertForUserServer "$json"
+  fi
+  case "${1}" in
+    kafka)
+      local kafkaConfFile="/opt/app/current/conf/kafka/server.properties";
+      if test -f ${kafkaConfFile}.1 && ! (diff -q  ${kafkaConfFile} ${kafkaConfFile}.1 ) ; then
+        # only figure out the changed parameter
+        _reload kafka;
+      fi
+      ;;
+    caddy)
+      local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+      if [[ "${JOINING_NODES}" =~ "kafka" ]] && [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
+        # start caddy for transfer ca from first node to new node
+        _startSvc caddy;
+      else
+        _reload caddy;
+      fi
+      ;;
+    *)
+      _reload $@ ;;
+  esac
   if [ "$MY_ROLE" == "kafka-manager" ]; then
     addCluster || log "Failed to addCluster when update";
     updateCluster || log "Failed to updateCluster when update";
@@ -59,7 +84,7 @@ reload() {
 }
 
 preCheckForScaleIn(){
-  local firstNode; firstNode="$(echo "${KAFKA_NODES}"  | awk -F/ '{print $4}')";
+  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
   if [[ "${LEAVING_NODES}" =~ "${firstNode}" ]]; then
     exit $EC_DELETE_FIRST_NODE
   fi
@@ -70,10 +95,7 @@ scaleIn(){
 }
 
 scaleOut(){
-  local firstNode; firstNode="$(echo "${KAFKA_NODES}" | awk '{print $1}')";
-  if [[ "${JOINING_NODES}" =~ "kafka" ]] && [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
-    _startSvc caddy
-  fi
+  log "${JOINING_NODES} added in $(date)."
 }
 
 check() {
