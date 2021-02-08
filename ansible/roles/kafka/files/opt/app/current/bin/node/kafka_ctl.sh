@@ -38,8 +38,9 @@ initCluster(){
   if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
     local caStorePath="/data/kafka/ca"
     mkdir -p ${caStorePath};
-    chown -R kafka.svc ${caStorePath};
     openssl req -new -newkey rsa:4096 -days 365 -x509 -subj "/CN=Kafka-Security-CA" -keyout ${caStorePath}/ca-key -out ${caStorePath}/ca-cert -nodes
+    chown -R kafka.svc ${caStorePath};
+    chmod 750 ${caStorePath}/*;
   fi
 }
 
