@@ -14,9 +14,9 @@ initNode() {
   local htmlFile=/data/$MY_ROLE/index.html
   [ -e "$htmlFile" ] || ln -s /opt/app/current/conf/caddy/index.html $htmlFile
   ln -sf /opt/app/current/bin/node/kfkctl.sh  /usr/bin/kfkctl
-  local retCd; retCd="$(retry 5 2 0 scpCaFromFirstNode)"
-  [[ "${retCd}" == "0" ]] || log "Failed to cp ca from first node"
   if [ "$MY_ROLE" == "kafka" ]; then
+    retry 5 3 0 scpCaFromFirstNode
+    [[ -f "/data/kafka/ca/ca-key" ]] || log "Failed to cp ca from first node"
     local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
     genCertForUserServer "$json"
   fi
@@ -24,8 +24,9 @@ initNode() {
 }
 
 scpCaFromFirstNode(){
-  if [[ "${JOINING_NODES}" =~ "${MY_INSTANCE_ID}" ]]; then
-    local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+  if [[ ! "${firstNode}" =~ "${MY_INSTANCE_ID}" ]]; then
+    log "copy ca from ${firstNode}"
     local firstNodeIp; firstNodeIp="$( echo ${firstNode} | awk -F/ '{print $6}')";
     for i in ca-key ca-cert; do
       curl -s -o /data/kafka/ca/${i} http://${firstNodeIp}/ca/${i}
