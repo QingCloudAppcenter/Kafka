@@ -16,7 +16,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-ynz6cbbz"
+      "image": "img-lds78kic"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -40,6 +40,10 @@
       "stop": {
         "cmd": "appctl stop",
         "order": 3
+      },
+      "upgrade": {
+        "cmd": "appctl upgrade",
+        "timeout": 180
       },
       "scale_in": {
         "nodes_to_execute_on": 1,
@@ -118,7 +122,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-ynz6cbbz"
+      "image": "img-lds78kic"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -137,6 +141,10 @@
       "stop": {
         "cmd": "appctl stop",
         "order": 1
+      },
+      "upgrade": {
+        "cmd": "appctl upgrade",
+        "timeout": 180
       },
       "restart": {
         "cmd": "appctl restart"

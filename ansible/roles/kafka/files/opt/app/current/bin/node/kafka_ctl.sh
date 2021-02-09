@@ -23,7 +23,7 @@ initNode() {
   chown -R kafka.svc /data/$MY_ROLE
 }
 
-scpCaFromFirstNode(){
+scpCaFromFirstNode() {
   local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
   if [[ ! "${firstNode}" =~ "${MY_INSTANCE_ID}" ]]; then
     log "copy ca from ${firstNode}"
@@ -34,7 +34,12 @@ scpCaFromFirstNode(){
   fi
 }
 
-initCluster(){
+upgrade(){
+  rm -f /data/$MY_ROLE/index.html;
+  execute init
+}
+
+initCluster() {
   local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
   if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
     local caStorePath="/data/kafka/ca"
