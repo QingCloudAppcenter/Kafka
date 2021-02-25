@@ -5,4 +5,4 @@ mode = "0700"
 keys = [
   "/",
 ]
-reload_cmd = "/opt/app/current/bin/tmpl/node.sh;"
+reload_cmd = "/opt/app/current/bin/tmpl/node.sh; appctl initCertForEip"

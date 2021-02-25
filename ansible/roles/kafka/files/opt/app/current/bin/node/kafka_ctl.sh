@@ -23,8 +23,14 @@ initNode() {
   chown -R kafka.svc /data/$MY_ROLE
 }
 
+getSpecialNode() {
+  for i in ${1}; do
+    [[ "${i}" =~ "$2" ]] && echo "${i}"
+  done
+}
+
 scpCaFromFirstNode() {
-  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
   if [[ ! "${firstNode}" =~ "${MY_INSTANCE_ID}" ]]; then
     log "copy ca from ${firstNode}"
     local firstNodeIp; firstNodeIp="$( echo ${firstNode} | awk -F/ '{print $6}')";
@@ -34,13 +40,13 @@ scpCaFromFirstNode() {
   fi
 }
 
-upgrade(){
+upgrade() {
   rm -f /data/$MY_ROLE/index.html;
   execute init
 }
 
 initCluster() {
-  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
   if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
     local caStorePath="/data/kafka/ca"
     mkdir -p ${caStorePath};
@@ -59,11 +65,16 @@ start() {
   fi
 }
 
-reload() {
-  if [ "$MY_ROLE" == "kafka" ]; then
+initCertForEip() {
+  local certLocation="/data/kafka/ssl/${MY_EIP:-${MY_IP}}/README"
+  if [[ "$MY_ROLE" == "kafka" ]] && [[ ! -f "${certLocation}" ]]; then
     local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
     genCertForUserServer "$json"
   fi
+}
+
+reload() {
+  initCertForEip
   case "${1}" in
     kafka)
       local kafkaConfFile="/opt/app/current/conf/kafka/server.properties";
@@ -73,7 +84,7 @@ reload() {
       fi
       ;;
     caddy)
-      local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+      local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
       if [[ "${JOINING_NODES}" =~ "kafka" ]] && [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
         # start caddy for transfer ca from first node to new node
         _startSvc caddy;
@@ -91,7 +102,7 @@ reload() {
 }
 
 preCheckForScaleIn(){
-  local firstNode; for i in $KAFKA_NODES; do  [[ "$i" =~ "stable/kafka/1" ]] && firstNode="$i"; done ;
+  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
   if [[ "${LEAVING_NODES}" =~ "${firstNode}" ]]; then
     exit $EC_DELETE_FIRST_NODE
   fi
@@ -193,9 +204,10 @@ genCertForUserServer(){
   local server="$(echo $1 | jq -r .user_server_info)" certPwd="$(echo $1 | jq -r .cert_password)"
   local serverStorePath="/data/kafka/ssl/${server:-localhost}"
   local caStorePath="/data/kafka/ca"
+  log "generate certificates for ${server:-localhost}"
   mkdir -p ${serverStorePath}
   rm -rf ${serverStorePath}/* # in case user change password
-  echo "ssl.truststore.location --->  ${server:-localhost}/kafka.server.truststore.jks ;  ssl.truststore.password ---> ${certPwd:-qingcloud} " > /data/kafka/ssl/${server:-localhost}/README
+  echo "ssl.truststore.location ---> ${server:-localhost}/kafka.server.truststore.jks ;  ssl.truststore.password ---> ${certPwd:-qingcloud} " > /data/kafka/ssl/${server:-localhost}/README
   keytool -keystore ${serverStorePath}/kafka.server.keystore.jks -alias ${server:-localhost} -validity 3650  -genkey -keyalg RSA -ext SAN=DNS:${server} -storepass "${certPwd:-qingcloud}" -keypass "${certPwd:-qingcloud}"  -storetype pkcs12 -dname "CN=${server:-localhost}"
   keytool -keystore ${serverStorePath}/kafka.server.truststore.jks  -alias CARoot -importcert -file ${caStorePath}/ca-cert  -storepass ${certPwd:-qingcloud} -keypass ${certPwd:-qingcloud} -noprompt
   keytool -keystore ${serverStorePath}/kafka.server.keystore.jks -alias ${server:-localhost} -certreq -file ${serverStorePath}/server-cert-request-file -storepass ${certPwd:-qingcloud} -keypass ${certPwd:-qingcloud}
