@@ -16,7 +16,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-lds78kic"
+      "image": "img-7jp38amw"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -25,7 +25,8 @@
     "volume": {
       "size": {{cluster.kafka.volume_size}},
       "mount_point": "/data",
-      "filesystem": "xfs"
+      "filesystem": "xfs",
+      "class": {{cluster.kafka.volume_class}}
     },
     "services": {
       "init": {
@@ -122,7 +123,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-lds78kic"
+      "image": "img-7jp38amw"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},

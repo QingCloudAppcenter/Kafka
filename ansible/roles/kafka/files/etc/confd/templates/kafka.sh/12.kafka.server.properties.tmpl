@@ -17,8 +17,10 @@ zookeeper.connect={{ range $i, $ip := $zkHosts }}{{ if $i }},{{ end }}{{ $ip }}:
 zookeeper.connection.timeout.ms=6000
 zookeeper.session.timeout.ms=6000
 
+{{- with getv "/env/advertised.host.name" "" }}
 advertised.port={{ getv "/env/advertised.port" }}
-advertised.host.name={{ getv "/env/advertised.host.name" }}
+advertised.host.name="{{ . }}"
+{{- end }}
 auto.create.topics.enable={{ getv "/env/auto.create.topics.enable" }}
 compression.type={{ getv "/env/compression.type" }}
 default.replication.factor={{ getv "/env/default.replication.factor" }}

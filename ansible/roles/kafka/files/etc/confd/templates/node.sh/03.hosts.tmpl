@@ -1,0 +1,12 @@
+hostsFile=/etc/hosts
+
+sed "/^# >> KAFKA nodes./,/^# << KAFKA nodes./d" $hostsFile > $hostsFile.swap
+
+flush >> $hostsFile.swap << HOSTS_FILE
+# >> KAFKA nodes. WARNING: this is managed by script and please don't touch manually.
+{{- range $node := ls "/hosts/kafka" }}
+{{ getv (printf "/hosts/kafka/%s/ip" $node) }}    {{ getv (printf "/hosts/kafka/%s/instance_id" $node) }}
+{{- end }}
+# << KAFKA nodes. WARNING: this is managed by script and please don't touch manually.
+HOSTS_FILE
+mv $hostsFile.swap $hostsFile
