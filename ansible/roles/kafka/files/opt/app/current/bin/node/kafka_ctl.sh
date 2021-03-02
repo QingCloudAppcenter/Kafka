@@ -15,7 +15,7 @@ initNode() {
   [ -e "$htmlFile" ] || ln -s /opt/app/current/conf/caddy/index.html $htmlFile
   ln -sf /opt/app/current/bin/node/kfkctl.sh  /usr/bin/kfkctl
   if [ "$MY_ROLE" == "kafka" ]; then
-    retry 5 3 0 scpCaFromFirstNode
+    retry 5 30 0 scpCaFromFirstNode
     [[ -f "/data/kafka/ca/ca-key" ]] || log "Failed to cp ca from first node"
     local json=$(jq -n --arg server_info ${MY_EIP:-${MY_IP}} --arg password qingcloud '{user_server_info:$server_info,cert_password:$password}')
     genCertForUserServer "$json"
@@ -24,13 +24,13 @@ initNode() {
 }
 
 getSpecialNode() {
-  for i in ${1}; do
-    [[ "${i}" =~ "$2" ]] && echo "${i}"
+  for i in ${@:2}; do
+    [[ "${i}" =~ "$1" ]] && echo "${i}" || echo ""
   done
 }
 
 scpCaFromFirstNode() {
-  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
+  local firstNode; firstNode=$(getSpecialNode "stable/kafka/1" $KAFKA_NODES);
   if [[ ! "${firstNode}" =~ "${MY_INSTANCE_ID}" ]]; then
     log "copy ca from ${firstNode}"
     local firstNodeIp; firstNodeIp="$( echo ${firstNode} | awk -F/ '{print $6}')";
@@ -46,7 +46,7 @@ upgrade() {
 }
 
 initCluster() {
-  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
+  local firstNode; firstNode=$(getSpecialNode "stable/kafka/1" $KAFKA_NODES);
   if [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
     local caStorePath="/data/kafka/ca"
     mkdir -p ${caStorePath};
@@ -84,7 +84,7 @@ reload() {
       fi
       ;;
     caddy)
-      local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
+      local firstNode; firstNode=$(getSpecialNode "stable/kafka/1" $KAFKA_NODES);
       if [[ "${JOINING_NODES}" =~ "kafka" ]] && [[ "${firstNode}" =~ "$MY_INSTANCE_ID" ]]; then
         # start caddy for transfer ca from first node to new node
         _startSvc caddy;
@@ -102,7 +102,7 @@ reload() {
 }
 
 preCheckForScaleIn(){
-  local firstNode; firstNode=$(getSpecialNode $KAFKA_NODES "stable/kafka/1");
+  local firstNode; firstNode=$(getSpecialNode "stable/kafka/1" $KAFKA_NODES);
   if [[ "${LEAVING_NODES}" =~ "${firstNode}" ]]; then
     exit $EC_DELETE_FIRST_NODE
   fi
