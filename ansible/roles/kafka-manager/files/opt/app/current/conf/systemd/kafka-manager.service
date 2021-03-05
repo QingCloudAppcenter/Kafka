@@ -9,10 +9,10 @@ RuntimeDirectory=kafka-manager
 PrivateTmp=true
 Type=simple
 User=kafka
-Group=kafka
+Group=svc
 LimitNOFILE=500000
 WorkingDirectory=/data/kafka-manager
-EnvironmentFile=/opt/app/conf/kafka-manager/.env
+EnvironmentFile=/opt/app/current/conf/kafka-manager/.env
 ExecStart=/opt/kafka-manager/current/bin/kafka-manager $KAFKA_MANAGER_OPTS
 Restart=on-failure
 

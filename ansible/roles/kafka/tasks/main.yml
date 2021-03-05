@@ -1,60 +1,34 @@
 ---
 - name: set variables
   set_fact:
-    kafka_version: 2.3.1   #实际安装版本
+    kafka_version: 2.6.1   #实际安装版本
     scala_versions:
-    - 2.11
-    - 2.12
+      - 2.13
+      - 2.12
+
+- name: prepare service user
+  include_role:
+    name: create-service-user-1.0.0
+  vars:
+    svc_user: kafka
+    svc_group: svc
 
 - name: install confd files
   include_role:
-    name: confd-files-1.0.2
-
-- name: copy systemd files
-  copy: #拷贝service文件
-    src: files/{{ item }}
-    dest: /{{ item }}
-    directory_mode: yes
-  with_items:
-    - lib/systemd/system/
-
-- name: disable auto start
-  systemd:
-    name: "{{ svc_name }}"
-    state: stopped
-    masked: yes
-  loop:
-  - kafka
-  loop_control:
-    loop_var: svc_name
-
-- name: add the service group
-  group:
-    name: kafka
-    state: present
-
-- name: add the service user
-  user:
-    name: kafka
-    groups: kafka
-    shell: /sbin/nologin
-    create_home: no
-    append: yes
-    comment: "Service User"
-    state: present
+    name: confd-files-1.0.9
 
 - name: install tools
   apt:
     update_cache: yes
-    name: ['openjdk-8-jdk','unzip','arping']
+    name: ['default-jdk','unzip']
     state: present
 
 - name: copy binaries
-  copy: #拷贝service文件
-    src: files/opt/
-    dest: /opt
+  copy:
+    src: "{{ role_path }}/files/opt/app/"
+    dest: /opt/app/
     owner: root
-    group: kafka
+    group: svc
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
@@ -70,7 +44,7 @@
       extracts: yes
       creates: "bin/kafka-server-start.sh"
       target_owner: kafka
-      target_group: kafka
+      target_group: svc
       bin_path:
   with_items: "{{ scala_versions }}"
 
@@ -79,12 +53,12 @@
     src: ../deps/kafka-statsd-metrics2-master-0.4.0.jar
     dest: /opt/kafka/{{ item }}-{{ kafka_version }}/libs
     owner: kafka
-    group: kafka
+    group: svc
   with_items: "{{ scala_versions }}"
 
 - name: set up version env
   copy:
-    dest: /opt/app/bin/envs/version.env
+    dest: /opt/app/current/bin/envs/version.env
     content: |
       KAFKA_VERSION_4_MANAGER=2.2.0      #因为 cmak 支持的kafka版本为2.2.0 2.4.0，无 2.3.0， 实测2.3.0也可使用
       KAFKA_VERSION={{ kafka_version }}

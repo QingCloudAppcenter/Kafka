@@ -1,11 +1,10 @@
 {{- if eq $myRole "kafka-manager" }}
 
-flush /opt/app/current/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
+flush /opt/app/current/conf/cmak/consumer.properties << CONSUMER_PROP_EOF
 security.protocol=PLAINTEXT
 key.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 value.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 group.id={{ getv "/cluster/cluster_id" }}{{ getv "/host/sid" }}
 CONSUMER_PROP_EOF
-
 
 {{- end }}

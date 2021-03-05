@@ -76,6 +76,18 @@
                 "range": [0, 1],
                 "required": "yes"
             }, {
+                "key": "volume_class",
+                "label": "Volume Class",
+                "description": "",
+                "type": "integer",
+                "default": 0,
+                "range": [
+                  0,
+                  3,
+                  6
+                ],
+                "required": "yes"
+              }, {
                 "key": "volume_size",
                 "label": "Volume Size",
                 "description": "The volume size for each instance",
@@ -131,7 +143,27 @@
             "required": "yes"
         }]
     }]
-},{
+},
+{
+    "key": "service_params",
+    "description": "Custom service configuration properties",
+    "type": "array",
+    "properties": [{
+      "key": "user_server",
+      "label": "user_server",
+      "description": "The user server info",
+      "type": "string",
+      "default": "localhost",
+      "required": "yes"
+    }, {
+      "key": "password",
+      "label": "password",
+      "description": "The password for cert",
+      "type": "string",
+      "default": "qingcloud", 
+      "required": "no"
+    }]
+  }, {
         "key": "env",
         "description": "Kafka service properties",
         "type": "array",
@@ -209,7 +241,7 @@
             "label": "offsets.topic.replication.factor",
             "description": "The replication factor for the offsets topic (set higher to ensure availability). Internal topic creation will fail until the cluster size meets this replication factor requirement",
             "type": "integer",
-            "default": 3,
+            "default": 1,
             "max": 100,
             "min": 1,
             "required": "yes"
@@ -426,11 +458,34 @@
             "key": "kafka.scala.version",
             "label": "kafka.scala.version",
             "description": "The scala version of kafka instance used",
-            "default": "2.11",
+            "default": "2.12",
             "type": "string",
-            "range": ["2.11", "2.12"],
+            "range": ["2.12", "2.13"],
             "changeable": false,
             "required": "yes"
+        }, {
+            "key": "web.console.enabled",
+            "label": "Enable web console",
+            "description": "enable or not for web console",
+            "type": "boolean",
+            "default": true,
+            "required": "no"
+        }, {
+            "key": "web.console.username",
+            "label": "Admin Username",
+            "description": "username of admin web console",
+            "type": "string",
+            "pattern": "^([a-z0-9.-]+)?$",
+            "default": "admin",
+            "required": "no"
+        }, {
+            "key": "web.console.password",
+            "label": "Admin Password",
+            "description": "password of admin web console",
+            "type": "password",
+            "pattern": "^\\w{0,24}$",
+            "default": "",
+            "required": "no"
         }]
     }]
 }

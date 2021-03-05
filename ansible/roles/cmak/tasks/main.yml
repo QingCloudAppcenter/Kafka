@@ -1,0 +1,45 @@
+---
+- name: install confd files
+  include_role:
+    name: confd-files-1.0.9
+
+- name: copy binaries
+  copy:
+    src: "{{ role_path }}/files/opt/app/"
+    dest: /opt/app/
+    owner: root
+    group: svc
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
+- name: install manager
+  include_role:
+    name: install-1.0.5
+  vars:
+    opts:
+      pkg_name: "{{ item  }}"
+      pkg_version: "{{ cmak_version }}"
+      pkg_type: zip
+      pkg_url: "https://github.com/yahoo/CMAK/releases/download/{{ cmak_version }}/cmak-{{ cmak_version }}.zip"
+      extracts: yes
+      target_owner: kafka
+      target_group: svc
+      creates: "bin/{{ item }}"
+      bin_path:
+  with_items: 
+    - cmak
+
+- name: copy binaries
+  copy:
+    src: "/opt/cmak/current/cmak-{{ cmak_version }}/"
+    dest: "/opt/cmak/current/"
+    owner: root
+    group: svc
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+    remote_src: yes
+
+- name: Remove old files
+  file: 
+    path: "/opt/cmak/current/cmak-{{ cmak_version }}"
+    state: absent

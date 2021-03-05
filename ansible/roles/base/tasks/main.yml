@@ -1,0 +1,7 @@
+---
+- name: install tools
+  apt:
+    update_cache: yes
+    name: ['jq']
+    state: present
+

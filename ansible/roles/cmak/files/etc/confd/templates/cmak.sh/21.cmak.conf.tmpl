@@ -6,8 +6,12 @@
 {{- if eq $myRole "kafka-manager" }}
 
 encrypted=$(echo -n {{ getv "/cluster/cluster_id" }}{{ getv "/cluster/user_id" }} | sha256sum | base64)
+ZK_HOSTS="{{ range $i, $p := getvs "/links/zk_service/hosts/*/ip" }}
+  {{- if $i }},{{ end }}
+  {{- . }}:{{ $zkPort }}
+{{- end }}/kafka/{{ getv "/cluster/cluster_id" }}"
 
-flush  /opt/app/current/conf/kafka-manager/application.conf << APP_CONF_EOF
+flush /opt/app/current/conf/cmak/application.conf << APP_CONF_EOF
 play.http.secret.key="${encrypted:0:65}"
 play.http.secret.key=\${?APPLICATION_SECRET}
 
@@ -20,11 +24,9 @@ play.http.requestHandler = "play.http.DefaultHttpRequestHandler"
 play.http.context = "/"
 
 # dependency
-kafka-manager.consumer.properties.file=/opt/app/current/conf/kafka-manager/consumer.properties
-kafka-manager.zkhosts="{{ range $i, $p := getvs "/links/zk_service/hosts/*/ip" }}
-  {{- if $i }},{{ end }}
-  {{- . }}:{{ $zkPort }}
-{{- end }}/kafka/{{ getv "/cluster/cluster_id" }}"
+kafka-manager.consumer.properties.file=/opt/app/current/conf/cmak/consumer.properties
+kafka-manager.zkhosts="${ZK_HOSTS}"
+cmak.zkhosts="${ZK_HOSTS}"
 kafka-manager.base-zk-path="/kafka-manager"
 pinned-dispatcher.type="PinnedDispatcher"
 pinned-dispatcher.executor="thread-pool-executor"

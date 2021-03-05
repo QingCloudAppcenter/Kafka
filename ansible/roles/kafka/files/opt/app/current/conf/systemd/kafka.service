@@ -7,12 +7,12 @@ After=network.target
 [Service]
 Type=simple
 User=kafka
-Group=kafka
+Group=svc
 LimitNOFILE=500000
 LimitFSIZE=infinity
 PIDFile=/var/run/kafka.pid
-EnvironmentFile=/opt/app/conf/kafka/.env
-ExecStart=/opt/kafka/current/bin/kafka-server-start.sh /opt/app/conf/kafka/server.properties
+EnvironmentFile=/opt/app/current/conf/kafka/.env
+ExecStart=/opt/kafka/current/bin/kafka-server-start.sh /opt/app/current/conf/kafka/server.properties
 ExecStop=/opt/kafka/current/bin/kafka-server-stop.sh
 TimeoutSec=120s
 Restart=always

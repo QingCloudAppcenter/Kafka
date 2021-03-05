@@ -8,9 +8,7 @@
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
     "appv-7o37pk3b",
-    "appv-3w7cnjir",
-    "appv-vx6yl2x5",
-    "appv-t2pkfxjs"
+    "appv-3ra1bq95"
   ],
   "upgrading_policy": "parallel",
   "nodes": [{
@@ -18,7 +16,7 @@
     "container": {
       "type": "lxc",
       "zone": "sh1a",
-      "image": "img-20a2vume"
+      "image": "img-tjq22ys8"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -27,19 +25,45 @@
     "volume": {
       "size": {{cluster.kafka.volume_size}},
       "mount_point": "/data",
-      "filesystem": "xfs"
+      "filesystem": "xfs",
+      "class": {{cluster.kafka.volume_class}}
     },
     "services": {
+      "init": {
+        "order": 1,
+        "cmd": "appctl init",
+        "timeout": 180
+      },
       "start": {
         "cmd": "appctl start",
-        "order": 1
+        "order": 2
       },
       "stop": {
         "cmd": "appctl stop",
-        "order": 2
+        "order": 3
+      },
+      "upgrade": {
+        "cmd": "appctl upgrade",
+        "timeout": 180
+      },
+      "scale_in": {
+        "nodes_to_execute_on": 1,
+        "pre_check": "appctl preCheckForScaleIn",
+        "cmd": "appctl scaleIn",
+        "timeout": 90
       },
       "restart": {
         "cmd": "appctl restart"
+      },
+      "gen_cert_for_user_server": {
+        "type": "custom",
+        "nodes_to_execute_on": 1,
+        "cmd": "appctl genCertForUserServer",
+        "timeout": 1200,
+        "service_params": {
+          "user_server_info": {{service_params.user_server}},
+          "cert_password": {{service_params.password}}
+        }
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -99,7 +123,7 @@
     "container": {
       "type": "kvm",
       "zone": "sh1a",
-      "image": "img-20a2vume"
+      "image": "img-tjq22ys8"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -113,11 +137,15 @@
     "services": {
       "start": {
         "cmd": "appctl start",
-        "order": 2
+        "order": 3
       },
       "stop": {
         "cmd": "appctl stop",
         "order": 1
+      },
+      "upgrade": {
+        "cmd": "appctl upgrade",
+        "timeout": 180
       },
       "restart": {
         "cmd": "appctl restart"
@@ -170,11 +198,18 @@
     "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
     "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
     "kafka-manager.port": {{env.kafka-manager.port}},
-    "kafka.scala.version": {{env.kafka.scala.version}}
+    "kafka.scala.version": {{env.kafka.scala.version}},
+    "web.console.enabled": {{env.web.console.enabled}},
+    "web.console.username": {{env.web.console.username}},
+    "web.console.password": {{env.web.console.password}}
   },
   "endpoints": {
     "client": {
-      "port": "env.advertised.port",
+      "port": "9092",
+      "protocol": "tcp"
+    },
+    "client-ssl": {
+      "port": "9093",
       "protocol": "tcp"
     },
     "kafka-manager": {

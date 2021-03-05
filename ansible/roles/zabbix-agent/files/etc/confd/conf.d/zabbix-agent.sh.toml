@@ -1,8 +1,8 @@
 [template]
 src = "zabbix-agent.sh.tmpl"
-dest = "/opt/app/bin/tmpl/zabbix-agent.sh"
+dest = "/opt/app/current/bin/tmpl/zabbix-agent.sh"
 mode = "0700"
 keys = [
   "/",
 ]
-reload_cmd = "/opt/app/bin/tmpl/zabbix-agent.sh; appctl reload zabbix-agent"
+reload_cmd = "/opt/app/current/bin/tmpl/zabbix-agent.sh; appctl reload zabbix-agent"
