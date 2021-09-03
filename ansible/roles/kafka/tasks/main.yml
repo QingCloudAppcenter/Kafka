@@ -8,7 +8,7 @@
 
 - name: install confd files
   include_role:
-    name: confd-files-1.0.2
+    name: confd-files
 
 - name: copy systemd files
   copy: #拷贝service文件
@@ -60,7 +60,7 @@
 
 - name: install kafka
   include_role:
-    name: install-1.0.5
+    name: install
   vars:
     opts:
       pkg_name: kafka
