@@ -3,7 +3,10 @@
 initNode() {
   ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
-  if [ "$MY_ROLE" = "kafka-manager" ]; then echo 'root:kafka' | chpasswd; echo 'ubuntu:kafka' | chpasswd; fi
+  if [ "$MY_ROLE" = "kafka-manager" ]; then
+    echo 'ubuntu:kafka' | chpasswd;
+    echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
+  fi
   mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
   chown -R zabbix.zabbix /data/zabbix
   chown -R kafka.kafka /data/$MY_ROLE

