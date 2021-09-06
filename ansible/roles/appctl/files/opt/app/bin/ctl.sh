@@ -179,7 +179,7 @@ _initNode() {
 
 _revive() {
   local svc; for svc in $(getServices); do
-    execute checkSvc $svc || restartSvc $svc || log "ERROR: failed to restart '$svc' ($?)."
+    execute checkSvc $svc || log "ERROR: Service '$svc' is not healthy ."
   done
 }
 
