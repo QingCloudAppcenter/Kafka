@@ -33,6 +33,8 @@ flush() {
 applyEnvs() {
   local -r envFile=/opt/app/bin/envs/confd.env
   if [ -f "$envFile" ]; then . $envFile; fi
+  local -r serviceEnvFile=/opt/app/bin/envs/services.env
+  if [ -f "$serviceEnvFile" ]; then . $serviceEnvFile; fi
 }
 
 applyEnvs

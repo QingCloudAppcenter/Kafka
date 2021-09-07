@@ -69,7 +69,7 @@ flush > /opt/app/conf/caddy/index.html << INDEX_HTML_EOF
     <title>Logs file viewer</title>
   </head>
   <body>
-    <header>文件查看器/</header>
+    <header>日志查看器/</header>
     <main>
     {{- $role := getv "/host/role" }}
     {{- $Nodes := getvs (printf "/hosts/%s/*/ip" $role) }}
@@ -81,11 +81,7 @@ flush > /opt/app/conf/caddy/index.html << INDEX_HTML_EOF
         {{- range $Nodes }}
         {{- if eq . $myIp }}
         <li><span>⊟</span>{{ . }}</li>
-        {{- if eq $myRole "kafka" }}
-        <li><span class="sub-1">⊞</span><a href="./dump/">dump</a></li>
-        <li><span class="sub-1">⊞</span><a href="./kafka-logs/">kafka-logs</a></li>
-        {{- end }}
-        <li><span class="sub-1">⊞</span><a href="./logs/">logs</a></li>
+        <li><span class="sub-1">⊞</span><a href="./log/">logs</a></li>
         {{- else }}
         <li><span>⊞</span><a href="//{{ . }}/">{{ . }}</a></li>
         {{- end }}
@@ -100,5 +96,3 @@ flush > /opt/app/conf/caddy/index.html << INDEX_HTML_EOF
 
 
 INDEX_HTML_EOF
-
-

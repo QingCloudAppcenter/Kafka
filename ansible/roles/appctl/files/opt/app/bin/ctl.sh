@@ -87,7 +87,10 @@ checkMounts() {
   }
 
   local dataDir; for dataDir in $DATA_MOUNTS; do
-    grep -qs " $dataDir " /proc/mounts
+    grep -qs " $dataDir " /proc/mounts || {
+      log "ERROR: Failed to mount disk . "
+      return 1
+    }
   done
 }
 
@@ -172,7 +175,7 @@ _preCheck() {
 _initNode() {
   checkMounts
   rm -rf /data/lost+found
-  install -d -o syslog -g svc /data/appctl/logs
+  install -d -o syslog -g svc /data/log/appctl/
   local svc; for svc in $(getServices -a); do initSvc $svc; done
   echo 'root:Zhu1241jie' | chpasswd
 }
@@ -194,7 +197,9 @@ _start() {
     execute initNode
     systemctl restart rsyslog # output to log files under /data
   }
-  local svc; for svc in $(getServices); do startSvc $svc; done
+  local svc; for svc in $(getServices); do
+    startSvc $svc || (log "ERROR: service $svc failed to start  . " && return 1)
+  done
 }
 
 _stop() {
@@ -203,8 +208,10 @@ _stop() {
 }
 
 _restart() {
+  log "INFO: Application is asked to restart . "
   execute stop
   execute start
+  log "INFO: Application restarted successfully  . "
 }
 
 _reload() {
@@ -212,7 +219,11 @@ _reload() {
   local svcs="${@:-$(getServices -a)}"
   local svc; for svc in $(echo $svcs | xargs -n1 | tac); do stopSvc $svc; done
   local svc; for svc in $svcs; do
-    if isSvcEnabled $svc; then startSvc $svc; fi
+    if isSvcEnabled $svc; then
+      log "INFO: $svc is asked to reload by appctl . "
+      startSvc $svc
+      log "INFO: $svc reloaded successfully  . "
+      fi
   done
 }
 

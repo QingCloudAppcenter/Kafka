@@ -1,36 +1,41 @@
 #!/usr/bin/env bash
 
 initNode() {
+  log "INFO: Application is about to initialize . "
   ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     echo 'ubuntu:kafka' | chpasswd;
     echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
+    log "INFO: Application initialize password for client user. "
   fi
-  mkdir -p /data/zabbix/logs  /data/$MY_ROLE/{dump,logs}
-  chown -R zabbix.zabbix /data/zabbix
-  chown -R kafka.kafka /data/$MY_ROLE
-  local htmlFile=/data/$MY_ROLE/index.html
-  [ -e "$htmlFile" ] || ln -s /opt/app/conf/caddy/index.html $htmlFile
+  mkdir -p ${DATA_MOUNTS}/log/zabbix/logs  ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
+  chown -R zabbix.zabbix ${DATA_MOUNTS}/log/zabbix
+  chown -R kafka.kafka ${DATA_MOUNTS}/log/$MY_ROLE
   ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  log "INFO: Application initialization completed  . "
 }
 
 
 start() {
-  _start
+  log "INFO: Application is asked to start . "
+  _start || (log "ERROR: services failed to start  . " && return 1)
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
     httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'.";
     updateCluster || log "Failed to updateCluster when update";
   fi
+  log "INFO: Application started successfully  . "
 }
 
 reload() {
+  log "INFO: Application is asked to reload  . "
   _reload $@
   if [ "$MY_ROLE" == "kafka-manager" ]; then
     addCluster || log "Failed to addCluster when update";
     updateCluster || log "Failed to updateCluster when update";
   fi
+  log "INFO: Application reloaded completely . "
 }
 
 check() {
