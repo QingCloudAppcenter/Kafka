@@ -5,7 +5,7 @@
 
 - name: install confd files
   include_role:
-    name: confd-files-1.0.2
+    name: confd-files
 
 - name: add the service group
   group:

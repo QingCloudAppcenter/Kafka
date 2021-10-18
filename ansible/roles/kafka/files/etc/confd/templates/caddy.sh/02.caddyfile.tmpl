@@ -1,11 +1,12 @@
+ln -s -f /opt/app/conf/caddy/index.html ${DATA_MOUNTS}/index.html
 {{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
 {{- $myRole := index $roleMap (getv "/host/role") }}
 {{- $myIp := getv "/host/ip" }}
-flush > /opt/app/conf/caddy/Caddyfile << CADDYFILE_EOF
+flush > /opt/app/conf/caddy/caddyfile << CADDYFILE_EOF
 {{ $myIp }}:80 {
-  root /data/{{ $myRole }}
+  root /data
   gzip
-  browse
+  browse /log
   tls off
 }
 CADDYFILE_EOF

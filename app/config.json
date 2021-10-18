@@ -64,7 +64,7 @@
                 "type": "integer",
                 "default": 3,
                 "auto_scale_step": 1,
-                "min": 1,
+                "min": 3,
                 "max": 200,
                 "required": "yes"
             }, {
