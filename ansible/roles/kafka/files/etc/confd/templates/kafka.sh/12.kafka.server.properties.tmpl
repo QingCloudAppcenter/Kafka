@@ -5,7 +5,7 @@ flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
 broker.id={{ getv "/host/sid" }}
 broker.rack={{ getv "/host/zone" (getv "/cluster/zone") }}
 host.name={{ $myIp }}
-log.dirs=${DATA_MOUNTS}/log/kafka/kafka-logs
+log.dirs=${DATA_MOUNTS}/kafka/kafka-logs
 log.flush.interval.messages=10000
 log.flush.interval.ms=1000
 log.retention.check.interval.ms=300000
@@ -35,7 +35,6 @@ external.kafka.statsd.metrics.prefix=
 external.kafka.statsd.port=8125
 external.kafka.statsd.reporter.enabled=true
 kafka.metrics.reporters=com.airbnb.kafka.KafkaStatsdMetricsReporter
-queued.max.requests=500
 KAFKA_SERVER_PROPERTIES_EOF
 
 {{- end }}
