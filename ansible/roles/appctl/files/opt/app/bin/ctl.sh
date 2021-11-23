@@ -155,6 +155,7 @@ _checkSvc() {
 
 startSvc() {
   systemctl start ${1%%/*}
+  systemctl enable ${1%%/*}
 }
 
 stopSvc() {

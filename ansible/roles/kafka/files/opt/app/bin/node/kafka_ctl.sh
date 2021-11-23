@@ -11,7 +11,9 @@ initNode() {
   fi
   mkdir -p ${DATA_MOUNTS}/log/zabbix/logs  ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
   chown -R zabbix.zabbix ${DATA_MOUNTS}/log/zabbix
+  chown -R kafka.kafka ${DATA_MOUNTS}/$MY_ROLE
   chown -R kafka.kafka ${DATA_MOUNTS}/log/$MY_ROLE
+  chmod 777 ${DATA_MOUNTS}/log/$MY_ROLE
   ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
   log "INFO: Application initialization completed  . "
 }
