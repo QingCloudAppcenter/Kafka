@@ -16,6 +16,7 @@ ExecStart=/opt/kafka/current/bin/kafka-server-start.sh /opt/app/conf/kafka/serve
 ExecStop=/opt/kafka/current/bin/kafka-server-stop.sh
 TimeoutSec=120s
 Restart=always
+StartLimitInterval=0
 SyslogIdentifier=kafka
 
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
