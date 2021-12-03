@@ -73,7 +73,7 @@
                 "description": "",
                 "type": "integer",
                 "default": 0,
-                "range": [0, 1],
+                "range": [101,201,202,203],
                 "required": "yes"
             }, {
                 "key": "volume_size",
@@ -120,7 +120,7 @@
             "description": "",
             "type": "integer",
             "default": 0,
-            "range": [0, 1],
+            "range": [101, 201, 202, 203],
             "required": "yes"
         }, {
             "key": "volume_size",
