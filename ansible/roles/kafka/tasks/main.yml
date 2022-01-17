@@ -1,7 +1,7 @@
 ---
 - name: set variables
   set_fact:
-    kafka_version: 2.3.1   #实际安装版本
+    kafka_version: 1.1.1   #实际安装版本
     scala_versions:
     - 2.11
     - 2.12
