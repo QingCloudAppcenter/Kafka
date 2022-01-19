@@ -44,3 +44,17 @@
       APPCTL_ENV=dev
 
   when: target_env == 'dev'
+
+- name: copy limits file
+  copy:
+    src: files/etc/security/limits.d/limits.conf
+    dest: /etc/security/limits.d/limits.conf
+    owner: root
+    group: svc
+    mode: preserve
+
+- name: set defualt limit for user
+  shell: sed -i 's/#DefaultLimitNOFILE=/DefaultLimitNOFILE=65535/g' /etc/systemd/user.conf
+
+- name: set defualt limit for system
+  shell: sed -i 's/#DefaultLimitNOFILE=/DefaultLimitNOFILE=65535/g' /etc/systemd/system.conf
