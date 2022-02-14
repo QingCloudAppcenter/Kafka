@@ -285,7 +285,7 @@
             "label": "num.replica.fetchers",
             "description": "Number of fetcher threads used to replicate messages from a source broker",
             "type": "integer",
-            "default": 1,
+            "default": 2,
             "max": 10,
             "min": 1,
             "required": "no"
