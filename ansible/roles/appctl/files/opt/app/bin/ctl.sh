@@ -131,12 +131,12 @@ checkEndpoint() {
 }
 
 isNodeInitialized() {
-  local svcs="$(getServices -a)"
-  [ "$(systemctl is-enabled ${svcs%%/*})" == "disabled" ]
+  test -f $APPCTL_NODE_FILE
 }
 
 initSvc() {
   systemctl unmask -q ${1%%/*}
+  touch $APPCTL_NODE_FILE
 }
 
 _checkSvc() {
