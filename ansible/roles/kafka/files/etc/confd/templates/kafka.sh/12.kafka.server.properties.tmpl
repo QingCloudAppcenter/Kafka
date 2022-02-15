@@ -1,3 +1,23 @@
+{{- $useSASL := getv "/env/ca_sasl" }}
+{{- if eq $useSASL "true" }}
+mkdir -p /ssl
+chmod 777 /ssl
+flush > /ssl/ca-cert << KAFKA_CA_CERT_EOF
+{{ getv "/env/ca_cert"}}
+KAFKA_CA_CERT_EOF
+flush > /ssl/ca-key << KAFKA_CA_KEY_EOF
+{{ getv "/env/ca_key"}}
+KAFKA_CA_KEY_EOF
+flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
+security.protocol=SSL
+ssl.truststore.location=/ssl/kafka.client.truststore.jks
+ssl.truststore.password={{ getv "/env/ca_password" }}
+ssl.keystore.password={{ getv "/env/ca_password" }}
+ssl.keystore.location=/ssl/kafka.client.keystore.jks
+ssl.endpoint.identification.algorithm=
+KAFKA_SASL_CONFIG_EOF
+{{- end }}
+
 {{- if eq $myRole "kafka" }}
 
 flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
@@ -17,11 +37,32 @@ zookeeper.connect={{ range $i, $ip := $zkHosts }}{{ if $i }},{{ end }}{{ $ip }}:
 zookeeper.connection.timeout.ms=6000
 zookeeper.session.timeout.ms=6000
 
+{{- $useSASL := getv "/env/ca_sasl" }}
+{{- if eq $useSASL "true" }}
+listeners=SSL://{{ $myIp }}:9092
+ssl.endpoint.identification.algorithm=
+ssl.keystore.location=/ssl/kafka.server.keystore.jks
+ssl.keystore.password={{ getv "/env/ca_password"}}
+ssl.key.password={{ getv "/env/ca_password"}}
+ssl.truststore.location=/ssl/kafka.server.truststore.jks
+ssl.truststore.password={{ getv "/env/ca_password"}}
+ssl.client.auth=required
+security.inter.broker.protocol=SSL
+{{- end }}
+
 # params input by user
 {{- range gets "/env/*" | filter ".+" }}
 {{- $key := base .Key }}
-{{- if not (eq (index (split $key ".") 0) "kafka-manager") }}
+{{- if not (eq (index (split $key ".") 0) "kafka-manager")}}
+{{- if not (eq (index (split $key "_") 0) "ca") }}
+{{- if eq (index (split $key "_") 0) "advertised"}}
+{{- if not (eq $useSASL "true")}}
+{{replace $key "_" "." -1}}={{ .Value }}
+{{- end }}
+{{- else }}
 {{ $key }}={{ .Value }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 

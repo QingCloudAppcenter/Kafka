@@ -84,58 +84,108 @@
                 "default": 30,
                 "required": "yes"
             }]
-    }, {
-        "key": "client",
-        "label": "client node",
-        "description": "client node",
-        "type": "array",
-        "properties": [{
-            "key": "cpu",
-            "label": "CPU",
-            "description": "CPUs of each node",
-            "type": "integer",
-            "default": 1,
-            "range": [1, 2, 4, 8, 12, 16],
-            "required": "yes"
         }, {
-            "key": "memory",
-            "label": "Memory",
-            "description": "Memory of each node",
-            "type": "integer",
-            "default": 1024,
-            "range": [1024, 2048, 4096, 8192, 16384, 32768,49152,65536],
-            "required": "yes"
-        }, {
-            "key": "count",
-            "label": "Node Count",
-            "description": "Number of nodes for the cluster to create",
-            "type": "integer",
-            "default": 1,
-            "min": 0,
-            "max": 20,
-            "required": "yes"
-        }, {
-            "key": "instance_class",
-            "label": "Node Class",
-            "description": "",
-            "type": "integer",
-            "default": 0,
-            "range": [101, 201, 202, 203],
-            "required": "yes"
-        }, {
-            "key": "volume_size",
-            "label": "Volume Size",
-            "description": "The volume size for each instance",
-            "type": "integer",
-            "default": 10,
-            "required": "yes"
+            "key": "client",
+            "label": "client node",
+            "description": "client node",
+            "type": "array",
+            "properties": [{
+                "key": "cpu",
+                "label": "CPU",
+                "description": "CPUs of each node",
+                "type": "integer",
+                "default": 1,
+                "range": [1, 2, 4, 8, 12, 16],
+                "required": "yes"
+            }, {
+                "key": "memory",
+                "label": "Memory",
+                "description": "Memory of each node",
+                "type": "integer",
+                "default": 1024,
+                "range": [1024, 2048, 4096, 8192, 16384, 32768,49152,65536],
+                "required": "yes"
+            }, {
+                "key": "count",
+                "label": "Node Count",
+                "description": "Number of nodes for the cluster to create",
+                "type": "integer",
+                "default": 1,
+                "min": 0,
+                "max": 20,
+                "required": "yes"
+            }, {
+                "key": "instance_class",
+                "label": "Node Class",
+                "description": "",
+                "type": "integer",
+                "default": 0,
+                "range": [101, 201, 202, 203],
+                "required": "yes"
+            }, {
+                "key": "volume_size",
+                "label": "Volume Size",
+                "description": "The volume size for each instance",
+                "type": "integer",
+                "default": 10,
+                "required": "yes"
+            }]
         }]
-    }]
-},{
+    },{
         "key": "env",
         "description": "Kafka service properties",
         "type": "array",
         "properties": [{
+            "key": "ca_sasl",
+            "label": "ca_sasl",
+            "description": "whether use sasl",
+            "type": "boolean",
+            "default": false,
+            "range": [true, false],
+            "changeable": true,
+            "required": "yes"
+        },{
+            "key": "ca_cert",
+            "label": "ca_cert",
+            "description": "ca cert file content",
+            "type": "string",
+            "dependencies": [{
+                "refkey": "ca_sasl",
+                "values": [true],
+                "operator": "in"
+            }],
+            "default": "",
+            "multiline": true,
+            "changeable": true,
+            "required": "yes"
+        },{
+            "key": "ca_key",
+            "label": "ca_key",
+            "description": "ca key file content",
+            "type": "string",
+            "dependencies": [{
+                "refkey": "ca_sasl",
+                "values": [true],
+                "operator": "in"
+            }],
+            "default": "",
+            "multiline": true,
+            "changeable": true,
+            "required": "yes"
+        },{
+            "key": "ca_password",
+            "label": "ca_password",
+            "description": "ca password",
+            "type": "password",
+            "dependencies": [{
+                "refkey": "ca_sasl",
+                "values": [true],
+                "operator": "in"
+            }],
+            "pattern": "^([^']{6,})$",
+            "changeable": true,
+            "required": "yes"
+        },{
             "key": "log.retention.bytes",
             "label": "log.retention.bytes",
             "description": "The maximum size of the log before deleting it",
@@ -325,17 +375,27 @@
             "range": [true, false],
             "required": "no"
         }, {
-            "key": "advertised.host.name",
-            "label": "advertised.host.name",
+            "key": "advertised_host_name",
+            "label": "advertised_host_name",
             "description": "This is the hostname that will be given out to other workers to connect to",
             "type": "string",
+            "dependencies": [{
+                "refkey": "ca_sasl",
+                "values": [false],
+                "operator": "in"
+            }],
             "default": "",
             "required": "no"
         }, {
-            "key": "advertised.port",
-            "label": "advertised.port",
+            "key": "advertised_port",
+            "label": "advertised_port",
             "description": "This is the port that will be given out to other workers to connect to",
             "type": "integer",
+            "dependencies": [{
+                "refkey": "ca_sasl",
+                "values": [false],
+                "operator": "in"
+            }],
             "default": 9092,
             "required": "no"
         }, {

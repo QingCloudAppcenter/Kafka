@@ -85,7 +85,8 @@ describeTopic() {
 consoleProducer() {
   local topicName
   read -p "please input the target topic name: " topicName
-  /opt/kafka/current/bin/kafka-console-producer.sh --broker-list ${brokerList} --topic ${topicName}
+  /opt/kafka/current/bin/kafka-console-producer.sh --broker-list ${brokerList} --topic ${topicName} \
+                        `if [[ $SASL ]]; then echo --producer.config /ssl/kafka.config; fi`
 }
 
 #func5
@@ -105,7 +106,8 @@ consoleConsumer() {
                         `if [[ $maxMeassagesNum ]]; then echo --max-messages ${maxMeassagesNum}; fi` \
                         `if [[ $offset ]]; then echo --offset ${offsetsNum}; fi` \
                         `if [[ $partitionsNum ]]; then echo --partition ${partitionsNum}; fi` \
-                        `if [[ $topicName ]]; then echo --topic ${topicName}; fi`
+                        `if [[ $topicName ]]; then echo --topic ${topicName}; fi` \
+                        `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 
@@ -134,14 +136,17 @@ consumerGroupManager() {
 }
 
 listAllConsumerGroup() {
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --list
+  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --list \
+                        `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 describeConsumergroup() {
   local consumerGroup
   read -p "input the group you want to describe: " consumerGroup
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup}
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} --state 
+  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} \
+                        `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
+  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} --state  \
+                        `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 deleteConsumerGroupInfo() {
@@ -150,7 +155,8 @@ deleteConsumerGroupInfo() {
   read -p "input the group you want to delete: " consumerGroup
   echo "please confirm the group you want to delete is " ${consumerGroup} 
   read -p "current mode : dry run ; executing only when you input yes : " confirmFlag
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --delete --group ${consumerGroup}  `if [[ "${confirmFlag}" == "yes" ]]; then echo --execute; else echo --dry-run; fi`
+  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --delete --group ${consumerGroup}  `if [[ "${confirmFlag}" == "yes" ]]; then echo --execute; else echo --dry-run; fi` \
+                        `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 resetOffset() {
@@ -172,7 +178,8 @@ resetOffset() {
                                                   `if [[ "${isReset2Latest}" = "1" ]]; then echo --to-latest; fi` \
                                                   `if [[ $topicName ]]; then echo --topic ${topicName}; fi` \
                                                   `if [[ ${consumerGroup} ]]; then echo --to-offset ${offsetsNum}; fi` \
-                                                  `if [[ ${offsetsDate} ]]; then echo --to-datatime ${offsetsDate}; fi`
+                                                  `if [[ ${offsetsDate} ]]; then echo --to-datatime ${offsetsDate}; fi` \
+                                                  `if [[ $SASL ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 #func8

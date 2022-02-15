@@ -198,6 +198,9 @@ _start() {
     execute initNode
     systemctl restart rsyslog # output to log files under /data
   }
+  if [ $SASL ];then
+    generate_and_sign_key
+  fi
   local svc; for svc in $(getServices); do
     startSvc $svc || (log "ERROR: service $svc failed to start  . " && return 1)
   done
@@ -217,6 +220,9 @@ _restart() {
 
 _reload() {
   if ! isNodeInitialized; then return 0; fi # only reload after initialized
+  if [ $SASL ];then
+    generate_and_sign_key
+  fi
   local svcs="${@:-$(getServices -a)}"
   local svc; for svc in $(echo $svcs | xargs -n1 | tac); do stopSvc $svc; done
   local svc; for svc in $svcs; do

@@ -1,11 +1,21 @@
+
 {{- if eq $myRole "kafka-manager" }}
 
 flush > /opt/app/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
+{{- $useSASL := getv "/env/ca_sasl" }}
+{{- if eq $useSASL "true" }}
+security.protocol=SSL
+ssl.truststore.location=/ssl/kafka.client.truststore.jks
+ssl.truststore.password={{ getv "/env/ca_password" }}
+ssl.keystore.password={{ getv "/env/ca_password" }}
+ssl.keystore.location=/ssl/kafka.client.keystore.jks
+ssl.endpoint.identification.algorithm=
+{{- else }}
 security.protocol=PLAINTEXT
 key.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 value.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 group.id={{ getv "/cluster/cluster_id" }}{{ getv "/host/sid" }}
+{{- end }}
 CONSUMER_PROP_EOF
-
 
 {{- end }}

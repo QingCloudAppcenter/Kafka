@@ -18,7 +18,6 @@ initNode() {
   log "INFO: Application initialization completed  . "
 }
 
-
 start() {
   log "INFO: Application is asked to start . "
   _start || (log "ERROR: services failed to start  . " && return 1)
@@ -122,4 +121,21 @@ buildParams() {
     params="operation=Update $params"
   fi
   local p; for p in $params; do echo -n "--data-urlencode $p "; done
+}
+
+generate_and_sign_key() {
+  pushd /ssl
+  FQDN_NAME=$(hostname --fqdn)
+  ROLE_NAME="server"
+  if [ "$MY_ROLE" = "kafka-manager" ]; then
+    ROLE_NAME="client"
+  fi
+  rm -f kafka.${ROLE_NAME}.* cert-file cert-signed
+  keytool -genkey -keystore kafka.${ROLE_NAME}.keystore.jks -validity 365 -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -dname "CN=${FQDN_NAME}" -storetype pkcs12  -ext SAN=DNS:${FQDN_NAME}
+  keytool -keystore kafka.${ROLE_NAME}.keystore.jks -certreq -file cert-file -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}"
+  openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-file -out cert-signed -days 365 -CAcreateserial -passin pass:"${SASL_PASSWD}"
+  keytool -keystore kafka.${ROLE_NAME}.truststore.jks -alias CARoot -import -file ca-cert -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -noprompt
+  keytool -keystore kafka.${ROLE_NAME}.keystore.jks -alias CARoot -import -file ca-cert -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -noprompt
+  keytool -keystore kafka.${ROLE_NAME}.keystore.jks -import -file cert-signed -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -noprompt
+  popd
 }

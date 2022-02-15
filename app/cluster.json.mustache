@@ -18,8 +18,8 @@
     "role":"kafka",
     "container": {
       "type": "lxc",
-      "zone": "pek3a",
-      "image": "img-kq7sbhgq"
+      "zone": "ap2a",
+      "image": "img-quw582b6"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -99,8 +99,8 @@
     "user_access": true,
     "container": {
       "type": "kvm",
-      "zone": "pek3a",
-      "image": "img-kq7sbhgq"
+      "zone": "ap2a",
+      "image": "img-quw582b6"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -137,14 +137,18 @@
     }
   }],
   "env": {
+    "ca_sasl": {{env.ca_sasl}},
+    "ca_cert": {{env.ca_cert}},
+    "ca_key": {{env.ca_key}},
+    "ca_password": {{env.ca_password}},
     "replica.lag.time.max.ms": {{env.replica.lag.time.max.ms}},
     "group.max.session.timeout.ms": {{env.group.max.session.timeout.ms}},
     "group.min.session.timeout.ms": {{env.group.min.session.timeout.ms}},
     "zabbix.server.ip": {{env.zabbix.server.ip}},
     "zabbix.agent.port": {{env.zabbix.agent.port}},
     "zabbix.agent.enable": {{env.zabbix.agent.enable}},
-    "advertised.host.name": {{env.advertised.host.name}},
-    "advertised.port": {{env.advertised.port}},
+    "advertised_host_name": {{env.advertised_host_name}},
+    "advertised_port": {{env.advertised_port}},
     "auto.create.topics.enable": {{env.auto.create.topics.enable}},
     "compression.type": {{env.compression.type}},
     "default.replication.factor": {{env.default.replication.factor}},
@@ -175,7 +179,7 @@
   },
   "endpoints": {
     "client": {
-      "port": "env.advertised.port",
+      "port": "env.advertised_port",
       "protocol": "tcp"
     },
     "kafka-manager": {
