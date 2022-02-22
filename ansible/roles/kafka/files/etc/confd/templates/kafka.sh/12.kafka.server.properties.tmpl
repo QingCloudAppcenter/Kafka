@@ -25,7 +25,7 @@ flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
 broker.id={{ getv "/host/sid" }}
 broker.rack={{ getv "/host/zone" (getv "/cluster/zone") }}
 host.name={{ $myIp }}
-log.dirs=${DATA_MOUNTS}/kafka/kafka-logs
+log.dirs=/data/kafka/kafka-logs
 log.flush.interval.messages=10000
 log.flush.interval.ms=1000
 log.retention.check.interval.ms=300000

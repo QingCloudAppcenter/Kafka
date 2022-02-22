@@ -69,6 +69,16 @@ execute() {
 
 applyEnvFiles() {
   local envFile; for envFile in $(find /opt/app/bin/envs -name "*.env"); do . $envFile; done
+  setCaEnv
+}
+
+setCaEnv() {
+  SASL=$(getMetadataValue "ca_sasl")
+  SASL_PASSWD=$(getMetadataValue "ca_password")
+}
+
+getMetadataValue() {
+  curl metadata 2>&1 | grep "/self/env/" | grep ${1} | awk '{print $2}'
 }
 
 applyRoleScripts() {
@@ -198,7 +208,7 @@ _start() {
     execute initNode
     systemctl restart rsyslog # output to log files under /data
   }
-  if [ $SASL ];then
+  if [ $SASL = "true" ];then
     generate_and_sign_key
   fi
   local svc; for svc in $(getServices); do
@@ -220,7 +230,7 @@ _restart() {
 
 _reload() {
   if ! isNodeInitialized; then return 0; fi # only reload after initialized
-  if [ $SASL ];then
+  if [ $SASL = "true" ];then
     generate_and_sign_key
   fi
   local svcs="${@:-$(getServices -a)}"

@@ -19,7 +19,7 @@
     "container": {
       "type": "lxc",
       "zone": "ap2a",
-      "image": "img-gw3t691o"
+      "image": "img-1ojnhqtf"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -32,7 +32,7 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl start",
+        "cmd": "sleep 10; appctl start",
         "order": 1
       },
       "stop": {
@@ -40,7 +40,7 @@
         "order": 2
       },
       "restart": {
-        "cmd": "appctl restart"
+        "cmd": "sleep 10; appctl restart"
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -100,7 +100,7 @@
     "container": {
       "type": "kvm",
       "zone": "ap2a",
-      "image": "img-gw3t691o"
+      "image": "img-1ojnhqtf"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -113,7 +113,7 @@
     },
     "services": {
       "start": {
-        "cmd": "appctl start",
+        "cmd": "sleep 10; appctl start",
         "order": 2
       },
       "stop": {
@@ -121,7 +121,7 @@
         "order": 1
       },
       "restart": {
-        "cmd": "appctl restart"
+        "cmd": "sleep 10; appctl restart"
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
