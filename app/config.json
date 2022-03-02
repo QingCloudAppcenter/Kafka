@@ -72,7 +72,7 @@
                 "label": "Node Class",
                 "description": "",
                 "type": "integer",
-                "default": 0,
+                "default": 101,
                 "range": [101,201,202,203],
                 "required": "yes"
             }, {
@@ -119,7 +119,7 @@
                 "label": "Node Class",
                 "description": "",
                 "type": "integer",
-                "default": 0,
+                "default": 101,
                 "range": [101, 201, 202, 203],
                 "required": "yes"
             }, {
