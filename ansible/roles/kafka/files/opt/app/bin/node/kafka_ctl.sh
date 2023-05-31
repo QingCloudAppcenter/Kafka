@@ -4,8 +4,8 @@ initNode() {
   log "INFO: Application is about to initialize . "
   ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
+  echo 'ubuntu:zhu1241jie' | chpasswd;
   if [ "$MY_ROLE" = "kafka-manager" ]; then
-    echo 'ubuntu:kafka' | chpasswd;
     echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
     log "INFO: Application initialize password for client user. "
   fi
@@ -15,6 +15,7 @@ initNode() {
   chown -R kafka.kafka ${DATA_MOUNTS}/log/$MY_ROLE
   chmod 777 ${DATA_MOUNTS}/log/$MY_ROLE
   ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  touch /opt/app/conf/appctl/kafka.metrics
   log "INFO: Application initialization completed  . "
 }
 
@@ -50,23 +51,74 @@ measure() {
   local metrics; metrics=$(echo mntr | nc -u -q3 -w3 127.0.0.1 8125)
   [ -n "$metrics" ] || return 1
 
+#  parseMetricsForJmx "server" "BrokerTopicMetrics" "MessagesInPerSec" "OneMinuteRate" "MessagesInPerSec_1MinuteRate" &
+#  parseMetricsForJmx "server" "BrokerTopicMetrics" "BytesInPerSec" "OneMinuteRate" "BytesInPerSec_1MinuteRate" &
+#  parseMetricsForJmx "server" "BrokerTopicMetrics" "BytesOutPerSec" "OneMinuteRate" "BytesOutPerSec_1MinuteRate" &
+#  parseMetricsForJmx "server" "ReplicaFetcherManager" "MaxLag,clientId=Replica" "Value" "Replica_MaxLag" &
+#  parseMetricsForJmx "server" "ReplicaManager" "IsrExpandsPerSec" "OneMinuteRate" "IsrExpandsPerSec_1MinuteRate" &
+#  parseMetricsForJmx "controller" "KafkaController" "ActiveControllerCount" "Value" "KafkaController_ActiveControllerCount" &
+#  parseMetricsForJmx "controller" "KafkaController" "OfflinePartitionsCount" "Value" "KafkaController_OfflinePartitionsCount" &
+#  wait
+
   cat << METRICS_EOF
   {
     "heap_usage": $(parseMetrics "$metrics" ".jvm.memory.heap.usage" 100),
-    "MessagesInPerSec_1MinuteRate": $(parseMetrics "$metrics" ".kafka.server.BrokerTopicMetrics.MessagesInPerSec.1MinuteRate"),
-    "BytesInPerSec_1MinuteRate": $(parseMetrics "$metrics" ".kafka.server.BrokerTopicMetrics.BytesInPerSec.1MinuteRate"),
-    "BytesOutPerSec_1MinuteRate": $(parseMetrics "$metrics" ".kafka.server.BrokerTopicMetrics.BytesOutPerSec.1MinuteRate"),
-    "Replica_MaxLag": $(parseMetrics "$metrics" "kafka.server.ReplicaFetcherManager.MaxLag.Replica"),
-    "KafkaController_ActiveControllerCount": $(parseMetrics "$metrics" ".kafka.controller.KafkaController.ActiveControllerCount"),
-    "KafkaController_OfflinePartitionsCount": $(parseMetrics "$metrics" ".kafka.controller.KafkaController.OfflinePartitionsCount")
+    "MessagesInPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/kafka.metrics | grep MessagesInPerSec | grep OneMinuteRate | awk '{printf("%.f",$2)}'),
+    "BytesInPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/kafka.metrics | grep BytesInPerSec | grep OneMinuteRate | awk '{printf("%.f",$2)}'),
+    "BytesOutPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/kafka.metrics | grep BytesOutPerSec | grep OneMinuteRate | awk '{printf("%.f",$2)}'),
+    "Replica_MaxLag": $(cat /opt/app/conf/appctl/kafka.metrics | grep ReplicaFetcherManager | grep Value | awk '{printf("%.f",$2)}'),
+    "IsrExpandsPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/kafka.metrics | grep IsrExpandsPerSec | grep OneMinuteRate | awk '{printf("%.f",$2)}'),
+    "KafkaController_ActiveControllerCount": $(cat /opt/app/conf/appctl/kafka.metrics | grep ActiveControllerCount | grep Value | awk '{printf("%.f",$2)}'),
+    "KafkaController_OfflinePartitionsCount": $(cat /opt/app/conf/appctl/kafka.metrics | grep OfflinePartitionsCount | grep Value | awk '{printf("%.f",$2)}')
   }
 METRICS_EOF
+  parseMetricsForJmxAll &
+
+#  cat << METRICS_EOF
+#  {
+#    "heap_usage": $(parseMetrics "$metrics" ".jvm.memory.heap.usage" 100),
+#    "MessagesInPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/MessagesInPerSec_1MinuteRate.metrics),
+#    "BytesInPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/BytesInPerSec_1MinuteRate.metrics),
+#    "BytesOutPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/BytesOutPerSec_1MinuteRate.metrics),
+#    "Replica_MaxLag": $(cat /opt/app/conf/appctl/Replica_MaxLag.metrics),
+#    "IsrExpandsPerSec_1MinuteRate": $(cat /opt/app/conf/appctl/IsrExpandsPerSec_1MinuteRate.metrics),
+#    "KafkaController_ActiveControllerCount": $(cat /opt/app/conf/appctl/KafkaController_ActiveControllerCount.metrics),
+#    "KafkaController_OfflinePartitionsCount": $(cat /opt/app/conf/appctl/KafkaController_OfflinePartitionsCount.metrics)
+#  }
+#METRICS_EOF
+# cat << METRICS_EOF
+#  {
+#    "heap_usage": $(parseMetrics "$metrics" ".jvm.memory.heap.usage" 100),
+#    "MessagesInPerSec_1MinuteRate": $(parseMetricsForJmx "server" "BrokerTopicMetrics" "MessagesInPerSec" "OneMinuteRate" "MessagesInPerSec_1MinuteRate"),
+#    "BytesInPerSec_1MinuteRate": $(parseMetricsForJmx "server" "BrokerTopicMetrics" "BytesInPerSec" "OneMinuteRate" "BytesInPerSec_1MinuteRate"),
+#    "BytesOutPerSec_1MinuteRate": $(parseMetricsForJmx "server" "BrokerTopicMetrics" "BytesOutPerSec" "OneMinuteRate" "BytesOutPerSec_1MinuteRate"),
+#    "Replica_MaxLag": $(parseMetricsForJmx "server" "ReplicaFetcherManager" "MaxLag,clientId=Replica" "Value" "Replica_MaxLag"),
+#    "IsrExpandsPerSec_1MinuteRate": $(parseMetricsForJmx "server" "ReplicaManager" "IsrExpandsPerSec" "OneMinuteRate" "IsrExpandsPerSec_1MinuteRate"),
+#    "KafkaController_ActiveControllerCount": $(parseMetricsForJmx "controller" "KafkaController" "ActiveControllerCount" "Value" "KafkaController_ActiveControllerCount"),
+#    "KafkaController_OfflinePartitionsCount":$(parseMetricsForJmx "controller" "KafkaController" "OfflinePartitionsCount" "Value" "KafkaController_OfflinePartitionsCount")
+#  }
+#METRICS_EOF
 }
 
 parseMetrics() {
   local metrics="$1" key="$2" factor
   [ -z "$3" ] || factor="*$3"
   echo "$metrics" | xargs -n1 | awk -F: 'BEGIN{value=""} $1=="'$key'"{value=$2} END{print (value=="" ? 0 : value'$factor')}'
+}
+
+parseMetricsForJmxAll() {
+  /opt/kafka/current/bin/kafka-run-class.sh kafka.tools.JmxTool --object-name kafka.server:type=BrokerTopicMetrics,name=MessagesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec \
+  --object-name kafka.server:type=ReplicaFetcherManager,name=MaxLag,clientId=Replica \
+  --object-name kafka.server:type=ReplicaManager,name=IsrExpandsPerSec \
+  --object-name kafka.controller:type=KafkaController,name=ActiveControllerCount \
+  --object-name kafka.controller:type=KafkaController,name=OfflinePartitionsCount \
+  --report-format tsv --one-time true  > /opt/app/conf/appctl/kafka.metrics
+}
+
+parseMetricsForJmx() {
+  /opt/kafka/current/bin/kafka-run-class.sh kafka.tools.JmxTool --object-name kafka.$1:type=$2,name=$3 --report-format tsv --one-time true |grep $4| awk '{printf("%.f",$2)}' > /opt/app/conf/appctl/$5.metrics
 }
 
 checkKafkaManager() {

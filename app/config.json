@@ -32,7 +32,7 @@
             "type": "service",
             "tag": ["ZK", "ZooKeeper"],
             "limits": {
-                "app-tg3lbp0a": []
+                "app-tg3lbp0a": ["appv-epiqko7t"]
             },
             "default": "",
             "required": "yes"
@@ -46,8 +46,8 @@
                 "label": "CPU",
                 "description": "CPUs of each node",
                 "type": "integer",
-                "default": 1,
-                "range": [1, 2, 4, 8, 12, 16],
+                "default": 2,
+                "range": [2, 4, 8, 12, 16],
                 "required": "yes"
             }, {
                 "key": "memory",
@@ -55,7 +55,7 @@
                 "description": "Memory of each node",
                 "type": "integer",
                 "default": 2048,
-                "range": [1024, 2048, 4096, 8192, 16384, 32768,49152,65536],
+                "range": [2048, 4096, 8192, 16384, 32768,49152,65536],
                 "required": "yes"
             }, {
                 "key": "count",
@@ -375,30 +375,6 @@
             "range": [true, false],
             "required": "no"
         }, {
-            "key": "advertised_host_name",
-            "label": "advertised_host_name",
-            "description": "This is the hostname that will be given out to other workers to connect to",
-            "type": "string",
-            "dependencies": [{
-                "refkey": "ca_sasl",
-                "values": [false],
-                "operator": "in"
-            }],
-            "default": "",
-            "required": "no"
-        }, {
-            "key": "advertised_port",
-            "label": "advertised_port",
-            "description": "This is the port that will be given out to other workers to connect to",
-            "type": "integer",
-            "dependencies": [{
-                "refkey": "ca_sasl",
-                "values": [false],
-                "operator": "in"
-            }],
-            "default": 9092,
-            "required": "no"
-        }, {
             "key": "kafka-manager.basicAuthentication.enabled",
             "label": "kafka-manager.basicAuthentication.enabled",
             "description": "Choose whether or not need to log in kafka-manager",
@@ -486,9 +462,9 @@
             "key": "kafka.scala.version",
             "label": "kafka.scala.version",
             "description": "The scala version of kafka instance used",
-            "default": "2.11",
+            "default": "2.13",
             "type": "string",
-            "range": ["2.11", "2.12"],
+            "range": ["2.13"],
             "changeable": false,
             "required": "yes"
         }]

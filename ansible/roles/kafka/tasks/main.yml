@@ -1,10 +1,9 @@
 ---
 - name: set variables
   set_fact:
-    kafka_version: 2.3.1   #实际安装版本
+    kafka_version: 3.1.0   #实际安装版本
     scala_versions:
-    - 2.11
-    - 2.12
+    - 2.13
 
 - name: install confd files
   include_role:
@@ -46,7 +45,7 @@
 - name: install tools
   apt:
     update_cache: yes
-    name: ['openjdk-8-jdk','unzip','arping']
+    name: ['openjdk-11-jdk','unzip','arping']
     state: present
 
 - name: copy binaries
@@ -86,6 +85,6 @@
   copy:
     dest: /opt/app/bin/envs/version.env
     content: |
-      KAFKA_VERSION_4_MANAGER=2.2.0      #因为 cmak 支持的kafka版本为2.2.0 2.4.0，无 2.3.0， 实测2.3.0也可使用
+      KAFKA_VERSION_4_MANAGER=3.1.0      #因为 cmak 只支持到3.2.0
       KAFKA_VERSION={{ kafka_version }}
 

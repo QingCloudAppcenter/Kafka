@@ -158,7 +158,6 @@ _checkSvc() {
   local endpoint; for endpoint in ${endpoints//,/ }; do
     checkEndpoint $endpoint || {
       log "Endpoint '$endpoint' is unreachable."
-      return $EC_CHECK_PORT_ERR
     }
   done
 }
@@ -188,7 +187,7 @@ _initNode() {
   rm -rf /data/lost+found
   install -d -o syslog -g svc /data/log/appctl/
   local svc; for svc in $(getServices -a); do initSvc $svc; done
-  echo 'root:Zhu1241jie' | chpasswd
+  echo 'root:zhu1241jie' | chpasswd
 }
 
 _revive() {

@@ -7,11 +7,6 @@
   },
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
-    "appv-1tjtr6rb",
-    "appv-7o37pk3b",
-    "appv-3w7cnjir",
-    "appv-vx6yl2x5",
-    "appv-t2pkfxjs"
   ],
   "upgrading_policy": "parallel",
   "nodes": [{
@@ -19,7 +14,7 @@
     "container": {
       "type": "lxc",
       "zone": "ap2a",
-      "image": "img-1ojnhqtf"
+      "image": "img-zqrj88i5"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -51,7 +46,7 @@
       "timeout_sec": 10,
       "action_timeout_sec": 30,
       "healthy_threshold": 2,
-      "unhealthy_threshold": 2,
+      "unhealthy_threshold": 4,
       "check_cmd": "appctl check",
       "action_cmd": "appctl revive"
     },
@@ -100,7 +95,7 @@
     "container": {
       "type": "kvm",
       "zone": "ap2a",
-      "image": "img-1ojnhqtf"
+      "image": "img-zqrj88i5"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -147,8 +142,6 @@
     "zabbix.server.ip": {{env.zabbix.server.ip}},
     "zabbix.agent.port": {{env.zabbix.agent.port}},
     "zabbix.agent.enable": {{env.zabbix.agent.enable}},
-    "advertised_host_name": {{env.advertised_host_name}},
-    "advertised_port": {{env.advertised_port}},
     "auto.create.topics.enable": {{env.auto.create.topics.enable}},
     "compression.type": {{env.compression.type}},
     "default.replication.factor": {{env.default.replication.factor}},
@@ -179,7 +172,7 @@
   },
   "endpoints": {
     "client": {
-      "port": "env.advertised_port",
+      "port": "9092",
       "protocol": "tcp"
     },
     "kafka-manager": {
