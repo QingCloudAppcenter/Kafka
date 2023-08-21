@@ -14,7 +14,7 @@
     "container": {
       "type": "lxc",
       "zone": "ap2a",
-      "image": "img-zqrj88i5"
+      "image": "img-3awxw5qk"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -95,7 +95,7 @@
     "container": {
       "type": "kvm",
       "zone": "ap2a",
-      "image": "img-zqrj88i5"
+      "image": "img-3awxw5qk"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -132,10 +132,11 @@
     }
   }],
   "env": {
-    "ca_sasl": {{env.ca_sasl}},
+    "sasl_type": {{env.sasl_type}},
     "ca_cert": {{env.ca_cert}},
     "ca_key": {{env.ca_key}},
-    "ca_password": {{env.ca_password}},
+    "sasl_username": {{env.sasl_username}},
+    "sasl_password": {{env.sasl_password}},
     "replica.lag.time.max.ms": {{env.replica.lag.time.max.ms}},
     "group.max.session.timeout.ms": {{env.group.max.session.timeout.ms}},
     "group.min.session.timeout.ms": {{env.group.min.session.timeout.ms}},

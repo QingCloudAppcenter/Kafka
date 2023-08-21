@@ -2,20 +2,35 @@
 {{- if eq $myRole "kafka-manager" }}
 
 flush > /opt/app/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
-{{- $useSASL := getv "/env/ca_sasl" }}
-{{- if eq $useSASL "true" }}
+
+{{- $SASLType := getv "/env/sasl_type" }}
+{{- if eq $SASLType "SSL" }}
 security.protocol=SSL
 ssl.truststore.location=/ssl/kafka.client.truststore.jks
-ssl.truststore.password={{ getv "/env/ca_password" }}
-ssl.keystore.password={{ getv "/env/ca_password" }}
+ssl.truststore.password={{ getv "/env/sasl_password" }}
+ssl.keystore.password={{ getv "/env/sasl_password" }}
 ssl.keystore.location=/ssl/kafka.client.keystore.jks
 ssl.endpoint.identification.algorithm=
+{{- else if eq $SASLType "SCRAM-SHA-512" }}
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+{{- else if eq $SASLType "SCRAM-SHA-256" }}
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-256
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+{{- else if eq $SASLType "SASL-PLAINTEXT" }}
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
 {{- else }}
 security.protocol=PLAINTEXT
+{{- end }}
 key.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 value.deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
 group.id={{ getv "/cluster/cluster_id" }}{{ getv "/host/sid" }}
-{{- end }}
 CONSUMER_PROP_EOF
 
 {{- end }}
+
+# /opt/kafka/current/bin/kafka-configs.sh --bootstrap-server {{ range $i := lsdir "/hosts/kafka" }}{{ if $i }},{{ end }}{{ getv (printf "/hosts/kafka/%s/ip" $i) }}:9092{{ end }} --entity-type topics --entity-name __consumer_offsets --alter --add-config cleanup.policy={{ getv "/env/log.cleanup.policy" }} --command-config /ssl/kafka.config

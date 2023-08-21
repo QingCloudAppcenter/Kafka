@@ -73,8 +73,8 @@ applyEnvFiles() {
 }
 
 setCaEnv() {
-  SASL=$(getMetadataValue "ca_sasl")
-  SASL_PASSWD=$(getMetadataValue "ca_password")
+  SASL=$(getMetadataValue "sasl_type")
+  SASL_PASSWD=$(getMetadataValue "sasl_password")
 }
 
 getMetadataValue() {
@@ -113,6 +113,7 @@ getServices() {
 }
 
 isSvcEnabled() {
+  log "Info: $(cat /opt/app/bin/envs/services.env)"
   local svc="${1%%/*}"
   [ "$(echo $(getServices -a) | xargs -n1 | awk -F/ '$1=="'$svc'" {print $2}')" = "true" ]
 }
@@ -207,7 +208,7 @@ _start() {
     execute initNode
     systemctl restart rsyslog # output to log files under /data
   }
-  if [ $SASL = "true" ];then
+  if [ $SASL = "SSL" ];then
     generate_and_sign_key
   fi
   local svc; for svc in $(getServices); do
@@ -229,7 +230,7 @@ _restart() {
 
 _reload() {
   if ! isNodeInitialized; then return 0; fi # only reload after initialized
-  if [ $SASL = "true" ];then
+  if [ $SASL = "SSL" ];then
     generate_and_sign_key
   fi
   local svcs="${@:-$(getServices -a)}"

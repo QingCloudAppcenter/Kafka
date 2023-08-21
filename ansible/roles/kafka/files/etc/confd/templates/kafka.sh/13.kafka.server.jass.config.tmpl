@@ -1,0 +1,89 @@
+mkdir -p /ssl
+chmod 777 /ssl
+{{- $SASLType := getv "/env/sasl_type" }}
+{{- if eq $SASLType "SSL" }}
+flush > /ssl/ca-cert << KAFKA_CA_CERT_EOF
+{{ getv "/env/ca_cert"}}
+KAFKA_CA_CERT_EOF
+flush > /ssl/ca-key << KAFKA_CA_KEY_EOF
+{{ getv "/env/ca_key"}}
+KAFKA_CA_KEY_EOF
+flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
+security.protocol=SSL
+ssl.truststore.location=/ssl/kafka.client.truststore.jks
+ssl.truststore.password={{ getv "/env/sasl_password" }}
+ssl.keystore.password={{ getv "/env/sasl_password" }}
+ssl.keystore.location=/ssl/kafka.client.keystore.jks
+ssl.endpoint.identification.algorithm=
+KAFKA_SASL_CONFIG_EOF
+
+{{- else if eq $SASLType "SCRAM-SHA-512" }}
+flush > /opt/app/conf/kafka/kafka_server_jaas.conf << KAFKA_SERVER_JAAS_CONF
+KafkaServer {
+  org.apache.kafka.common.security.scram.ScramLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CONF
+flush > /opt/app/conf/kafka/kafka_client_jaas.conf << KAFKA_SERVER_JAAS_CLIENT_CONF
+KafkaClient {
+  org.apache.kafka.common.security.scram.ScramLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CLIENT_CONF
+flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+KAFKA_SASL_CONFIG_EOF
+
+{{- else if eq $SASLType "SCRAM-SHA-256" }}
+flush > /opt/app/conf/kafka/kafka_server_jaas.conf << KAFKA_SERVER_JAAS_CONF
+KafkaServer {
+  org.apache.kafka.common.security.scram.ScramLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CONF
+flush > /opt/app/conf/kafka/kafka_client_jaas.conf << KAFKA_SERVER_JAAS_CLIENT_CONF
+KafkaClient {
+  org.apache.kafka.common.security.scram.ScramLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CLIENT_CONF
+flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-256
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+KAFKA_SASL_CONFIG_EOF
+
+{{- else if eq $SASLType "SASL-PLAINTEXT" }}
+flush > /opt/app/conf/kafka/kafka_server_jaas.conf << KAFKA_SERVER_JAAS_CONF
+KafkaServer {
+  org.apache.kafka.common.security.plain.PlainLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}"
+  user_{{ getv "/env/sasl_username"}}="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CONF
+flush > /opt/app/conf/kafka/kafka_client_jaas.conf << KAFKA_SERVER_JAAS_CLIENT_CONF
+KafkaClient {
+  org.apache.kafka.common.security.plain.PlainLoginModule required
+  username="{{ getv "/env/sasl_username"}}"
+  password="{{ getv "/env/sasl_password"}}";
+};
+KAFKA_SERVER_JAAS_CLIENT_CONF
+flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+KAFKA_SASL_CONFIG_EOF
+{{- else }}
+flush > /ssl/kafka.config << KAFKA_NONE_SASL_CONFIG_EOF
+security.protocol=PLAINTEXT
+sasl.mechanism=PLAIN
+KAFKA_NONE_SASL_CONFIG_EOF
+{{- end }}
+

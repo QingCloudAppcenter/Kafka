@@ -9,7 +9,13 @@ initNode() {
     echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
     log "INFO: Application initialize password for client user. "
   fi
+
+  if [ "${SASL}" = "SCRAM-SHA-256" ] || [ "${SASL}" = "SCRAM-SHA-512" ]; then
+    retry_create_zk_node
+  fi
+
   mkdir -p ${DATA_MOUNTS}/log/zabbix/logs  ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
+  mkdir -p /etc/zabbix/zabbix_agentd.d/
   chown -R zabbix.zabbix ${DATA_MOUNTS}/log/zabbix
   chown -R kafka.kafka ${DATA_MOUNTS}/$MY_ROLE
   chown -R kafka.kafka ${DATA_MOUNTS}/log/$MY_ROLE
@@ -164,13 +170,38 @@ buildParams() {
   tuning.kafkaAdminClientThreadPoolQueueSize=1000
   tuning.kafkaManagedOffsetMetadataCheckMillis=30000
   tuning.kafkaManagedOffsetGroupCacheSize=1000000
-  tuning.kafkaManagedOffsetGroupExpireDays=7
-  securityProtocol=PLAINTEXT
-  saslMechanism=DEFAULT
-  jaasConfig=""
-  "
+  tuning.kafkaManagedOffsetGroupExpireDays=7"
   if [ "$1" == "--update" ]; then
     params="operation=Update $params"
+  fi
+  if [ "${SASL}" == "SCRAM-SHA-512" ]; then
+    local addParams="
+    securityProtocol=SASL_PLAINTEXT
+    saslMechanism=SCRAM-SHA-512
+    jaasConfig=org.apache.kafka.common.security.scram.ScramLoginModule required username="${SASL_USER}" password="${SASL_PASSWD}";
+    "
+    params="$params $addParams"
+  elif [ "${SASL}" == "SCRAM-SHA-256" ]; then
+    local addParams="
+    securityProtocol=SASL_PLAINTEXT
+    saslMechanism=SCRAM-SHA-256
+    jaasConfig=org.apache.kafka.common.security.scram.ScramLoginModule required username="${SASL_USER}" password="${SASL_PASSWD}";
+    "
+    params="$params $addParams"
+  elif [ "${SASL}" == "SASL_PLAINTEXT" ]; then
+    local addParams="
+    securityProtocol=SASL_PLAINTEXT
+    saslMechanism=SCRAM-SHA-256
+    jaasConfig=org.apache.kafka.common.security.plain.PlainLoginModule required username="${SASL_USER}" password="${SASL_PASSWD}";
+    "
+    params="$params $addParams"
+  else
+    local addParams="
+    securityProtocol=PLAINTEXT
+     saslMechanism=DEFAULT
+     jaasConfig=""
+     "
+    params="$params $addParams"
   fi
   local p; for p in $params; do echo -n "--data-urlencode $p "; done
 }
@@ -190,4 +221,41 @@ generate_and_sign_key() {
   keytool -keystore kafka.${ROLE_NAME}.keystore.jks -alias CARoot -import -file ca-cert -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -noprompt
   keytool -keystore kafka.${ROLE_NAME}.keystore.jks -import -file cert-signed -storepass "${SASL_PASSWD}" -keypass "${SASL_PASSWD}" -noprompt
   popd
+}
+
+create_zk_node() {
+  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} create /kafka/${CLUSTER_ID}
+}
+
+check_zk_node() {
+  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} ls /kafka/${CLUSTER_ID}
+}
+
+retry_create_zk_node() {
+  local tried=0
+  local maxAttempts=5
+  local interval=20
+  local stopCode=0
+  local retCode=0
+  while [ $tried -lt $maxAttempts ]; do
+     check_zk_node && {
+      retCode=$?
+      if [ "$retCode" = "$stopCode" ]; then
+        log "Info: zk nodes /kafka/${CLUSTER_ID} exists"
+        return $retCode
+      fi
+    }
+    create_zk_node && {
+      retCode=$?
+      if [ "$retCode" = "$stopCode" ]; then
+        log "Info: zk nodes /kafka/${CLUSTER_ID} create successfully"
+      else
+        sleep $interval
+        tried=$((tried+1))
+      fi
+    }
+  done
+
+  log "Info: Create zk nodes /kafka/${CLUSTER_ID} still returned errors after $tried attempts. Stopping ..."
+  return $retCode
 }

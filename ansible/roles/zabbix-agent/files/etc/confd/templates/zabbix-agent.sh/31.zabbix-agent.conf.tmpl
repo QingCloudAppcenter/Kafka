@@ -1,7 +1,22 @@
+mkdir -p /etc/zabbix/zabbix_agentd.d/
+
+{{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
+{{- $myRole := index $roleMap (getv "/host/role") }}
+flush > /opt/app/bin/envs/services.env << SERVICES_EOF
+SERVICES="$( echo "
+{{ if eq $myRole "kafka" }}kafka/true/tcp:9092{{ end }}
+{{ if eq $myRole "kafka-manager" }}kafka-manager/true/http:{{ getv "/env/kafka-manager.port" "9000" }}{{ end }}
+caddy/true/tcp:80
+zabbix-agent/{{ getv "/env/zabbix.agent.enable" "false" }}/tcp:{{ getv "/env/zabbix.agent.port" "10050" }}" | xargs)"
+
+DATA_MOUNTS="/data"
+NODE_CTL="kafka_ctl"
+KAFKA_SCALA_VERSION={{ getv "/env/kafka.scala.version" "2.13" }}
+SERVICES_EOF
 
 flush > /etc/zabbix/zabbix_agentd.conf << ZABBIX_EOF
 PidFile=/var/run/zabbix/zabbix_agentd.pid
-LogFile=${DATA_MOUNTS}/log/zabbix/zabbix_agentd.log
+LogFile=/data/log/zabbix/zabbix_agentd.log
 LogFileSize=20
 Server={{ getv "/env/zabbix.server.ip" "127.0.0.1" }}
 ListenPort={{ getv "/env/zabbix.agent.port" "10050" }}

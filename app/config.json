@@ -136,22 +136,22 @@
         "description": "Kafka service properties",
         "type": "array",
         "properties": [{
-            "key": "ca_sasl",
-            "label": "ca_sasl",
-            "description": "whether use sasl",
-            "type": "boolean",
-            "default": false,
-            "range": [true, false],
+            "key": "sasl_type",
+            "label": "sasl.type",
+            "description": "sasl type for kafka",
+            "type": "string",
+            "default": "NONE",
+            "range": ["NONE", "SASL-PLAINTEXT", "SCRAM-SHA-256", "SCRAM-SHA-512", "SSL"],
             "changeable": true,
             "required": "yes"
         },{
             "key": "ca_cert",
-            "label": "ca_cert",
+            "label": "ca.cert",
             "description": "ca cert file content",
             "type": "string",
             "dependencies": [{
-                "refkey": "ca_sasl",
-                "values": [true],
+                "refkey": "sasl_type",
+                "values": ["SSL"],
                 "operator": "in"
             }],
             "default": "",
@@ -160,12 +160,12 @@
             "required": "yes"
         },{
             "key": "ca_key",
-            "label": "ca_key",
+            "label": "ca.key",
             "description": "ca key file content",
             "type": "string",
             "dependencies": [{
-                "refkey": "ca_sasl",
-                "values": [true],
+                "refkey": "sasl_type",
+                "values": ["SSL"],
                 "operator": "in"
             }],
             "default": "",
@@ -173,16 +173,30 @@
             "changeable": true,
             "required": "yes"
         },{
-            "key": "ca_password",
-            "label": "ca_password",
-            "description": "ca password",
+            "key": "sasl_username",
+            "label": "sasl.username",
+            "description": "sasl username",
+            "type": "string",
+            "dependencies": [{
+                "refkey": "sasl_type",
+                "values": ["SASL-PLAINTEXT", "SCRAM-SHA-256", "SCRAM-SHA-512"],
+                "operator": "in"
+            }],
+            "default": "admin",
+            "changeable": true,
+            "required": "yes"
+        },{
+            "key": "sasl_password",
+            "label": "sasl.password",
+            "description": "sasl password",
             "type": "password",
             "dependencies": [{
-                "refkey": "ca_sasl",
-                "values": [true],
+                "refkey": "sasl_type",
+                "values": ["SASL-PLAINTEXT", "SCRAM-SHA-256", "SCRAM-SHA-512", "SSL"],
                 "operator": "in"
             }],
             "pattern": "^([^']{6,})$",
+            "default": "password",
             "changeable": true,
             "required": "yes"
         },{

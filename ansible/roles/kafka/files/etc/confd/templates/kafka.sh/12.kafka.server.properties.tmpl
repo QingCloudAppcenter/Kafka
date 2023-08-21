@@ -1,23 +1,3 @@
-{{- $useSASL := getv "/env/ca_sasl" }}
-{{- if eq $useSASL "true" }}
-mkdir -p /ssl
-chmod 777 /ssl
-flush > /ssl/ca-cert << KAFKA_CA_CERT_EOF
-{{ getv "/env/ca_cert"}}
-KAFKA_CA_CERT_EOF
-flush > /ssl/ca-key << KAFKA_CA_KEY_EOF
-{{ getv "/env/ca_key"}}
-KAFKA_CA_KEY_EOF
-flush > /ssl/kafka.config << KAFKA_SASL_CONFIG_EOF
-security.protocol=SSL
-ssl.truststore.location=/ssl/kafka.client.truststore.jks
-ssl.truststore.password={{ getv "/env/ca_password" }}
-ssl.keystore.password={{ getv "/env/ca_password" }}
-ssl.keystore.location=/ssl/kafka.client.keystore.jks
-ssl.endpoint.identification.algorithm=
-KAFKA_SASL_CONFIG_EOF
-{{- end }}
-
 {{- if eq $myRole "kafka" }}
 
 flush > /opt/app/conf/kafka/server.properties << KAFKA_SERVER_PROPERTIES_EOF
@@ -37,8 +17,8 @@ zookeeper.connect={{ range $i, $ip := $zkHosts }}{{ if $i }},{{ end }}{{ $ip }}:
 zookeeper.connection.timeout.ms=6000
 zookeeper.session.timeout.ms=6000
 
-{{- $useSASL := getv "/env/ca_sasl" }}
-{{- if eq $useSASL "true" }}
+{{- $SASLType := getv "/env/sasl_type" }}
+{{- if eq $SASLType "SSL" }}
 
 {{- if eq $myEip "" }}
 listeners=SSL://{{ $myIp }}:9092
@@ -49,14 +29,47 @@ advertised.listeners=SSL://{{ $myEip }}:9092
 
 ssl.endpoint.identification.algorithm=
 ssl.keystore.location=/ssl/kafka.server.keystore.jks
-ssl.keystore.password={{ getv "/env/ca_password"}}
-ssl.key.password={{ getv "/env/ca_password"}}
+ssl.keystore.password={{ getv "/env/sasl_password"}}
+ssl.key.password={{ getv "/env/sasl_password"}}
 ssl.truststore.location=/ssl/kafka.server.truststore.jks
-ssl.truststore.password={{ getv "/env/ca_password"}}
+ssl.truststore.password={{ getv "/env/sasl_password"}}
 ssl.client.auth=required
 security.inter.broker.protocol=SSL
 ssl.enabled.protocols=TLSv1.2,TLSv1.1,TLSv1
 ssl.protocol=SSL
+{{- else if eq $SASLType "SCRAM-SHA-512" }}
+
+security.inter.broker.protocol=SASL_PLAINTEXT
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+sasl.enabled.mechanisms=SCRAM-SHA-512
+{{- if eq $myEip "" }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+{{- else }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+advertised.listeners=SASL_PLAINTEXT://{{ $myEip }}:9092
+{{- end }}
+{{- else if eq $SASLType "SCRAM-SHA-256" }}
+
+security.inter.broker.protocol=SASL_PLAINTEXT
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-256
+sasl.enabled.mechanisms=SCRAM-SHA-256
+{{- if eq $myEip "" }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+{{- else }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+advertised.listeners=SASL_PLAINTEXT://{{ $myEip }}:9092
+{{- end }}
+{{- else if eq $SASLType "SASL-PLAINTEXT"}}
+
+security.inter.broker.protocol=SASL_PLAINTEXT
+sasl.mechanism.inter.broker.protocol=PLAIN
+sasl.enabled.mechanisms=PLAIN
+{{- if eq $myEip "" }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+{{- else }}
+listeners=SASL_PLAINTEXT://{{ $myIp }}:9092
+advertised.listeners=SASL_PLAINTEXT://{{ $myEip }}:9092
+{{- end }}
 {{- else }}
 
 {{- if eq $myEip "" }}
@@ -76,7 +89,7 @@ advertised.listeners=PLAINTEXT://{{ $myEip }}:9092
 {{- if not (eq (index (split $key ".") 0) "kafka-manager")}}
 {{- if not (eq (index (split $key "_") 0) "ca") }}
 {{- if eq (index (split $key "_") 0) "advertised"}}
-{{- if not (eq $useSASL "true")}}
+{{- if not (eq (index (split $key "_") 0) "sasl")}}
 {{replace $key "_" "." -1}}={{ .Value }}
 {{- end }}
 {{- else }}
@@ -101,7 +114,13 @@ KAFKA_SERVER_PROPERTIES_EOF
 
 {{- end }}
 
- pushd /opt/kafka/current/
-./bin/kafka-configs.sh --bootstrap-server {{ $myIp }}:9092 --entity-type topics --entity-name __consumer_offsets --alter --add-config cleanup.policy={{ getv "/env/log.cleanup.policy" }}
-popd
+{{- $clusterId := getv "/cluster/cluster_id" }}
+{{- $zkHosts := getvs "/links/zk_service/hosts/*/ip" }}
+{{- $SASLType := getv "/env/sasl_type" }}
+{{- if eq $SASLType "SCRAM-SHA-512" }}
 
+/opt/kafka/current/bin/kafka-configs.sh --zookeeper {{ range $i, $ip := $zkHosts }}{{ if $i }},{{ end }}{{ $ip }}:{{ $zkPort }}{{ end }}/kafka/{{ $clusterId }} --alter --add-config 'SCRAM-SHA-512=[password={{ getv "/env/sasl_password"}}]' --entity-type users --entity-name {{ getv "/env/sasl_username"}}
+{{- else if eq $SASLType "SCRAM-SHA-256" }}
+
+/opt/kafka/current/bin/kafka-configs.sh --zookeeper {{ range $i, $ip := $zkHosts }}{{ if $i }},{{ end }}{{ $ip }}:{{ $zkPort }}{{ end }}/kafka/{{ $clusterId }} --alter --add-config 'SCRAM-SHA-256=[password={{ getv "/env/sasl_password"}}]' --entity-type users --entity-name {{ getv "/env/sasl_username"}}
+{{- end }}
