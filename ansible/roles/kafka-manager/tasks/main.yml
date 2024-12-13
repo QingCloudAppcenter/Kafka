@@ -1,13 +1,8 @@
 ---
 - name: setvariables
   set_fact:
-    kafka_manager_version: "3.0.0.6"
-    scala_version: "2.12"
-
-- name: install java11
-  apt:
-    name: openjdk-11-jdk
-    state: present
+    kafka_manager_version: "{{ kafka_manager_version | d('3.0.0.6') }}"
+    installPath: "/opt/kafka-manager"
 
 - name: install confd files
   include_role:
@@ -40,23 +35,16 @@
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
-- name: prepare service directories
+- name: prepare dir
   file:
-    path: /opt/kafka-manager/{{ kafka_manager_version }}
-    owner: kafka
-    group: kafka
+    path: "{{ installPath }}/{{ kafka_manager_version }}"
     state: directory
 
-- name: create symbolic links
+- name: link for current
   file:
-    src: /opt/{{ item.name }}/{{ item.version }}
-    dest: /opt/{{ item.name }}/current
-    owner: kafka
-    group: kafka
+    src: "{{ installPath }}/{{ kafka_manager_version }}"
+    dest: "{{ installPath }}/current"
     state: link
-  with_items:
-    - name: kafka-manager
-      version: "{{ kafka_manager_version }}"
 
 # note: Cmak 3.0.0.0及以上版本需要Zookeeper3.5及其以上版本支持
 # 现注释Cmak包编译安装部分，直接使用bin包
@@ -93,54 +81,32 @@
 #     mode: preserve
 #     directory_mode: u=rwx,g=rx,o=
 
-
-- name: install kafka
-  include_role:
-    name: install
+- include_role:
+    name: downloader
   vars:
     opts:
-      pkg_name: kafka
+      pkg_name: cmak
       pkg_version: "{{ kafka_manager_version }}"
-      pkg_type: zip
+      pkg_feature: "linux"
+      pkg_fileType: ".zip"
       pkg_url: "https://github.com/yahoo/CMAK/releases/download/{{ kafka_manager_version }}/cmak-{{ kafka_manager_version }}.zip"
-      extracts: yes
-      dest_path: /opt/kafka-manager/
-      creates: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/bin/kafka-manager
-      target_owner: kafka
-      target_group: kafka
-      bin_path:
 
+- name: decompress file
+  unarchive:
+    src: "{{ downloaded }}"
+    dest: "/tmp"
+    creates: "/tmp/cmak-{{ kafka_manager_version }}/bin/cmak"
 
-#- name: install kafka manager binaries
-#  unarchive:
-#    src: /tmp/kafka-manager-{{ kafka_manager_version }}.zip
-#    dest: /opt/kafka-manager/
-#    owner: kafka
-#    group: kafka
-#    creates: /opt/kafka-manager/kafka-manager-{{ kafka_manager_version }}/bin/kafka-manager
-#    remote_src: yes
-
-
-# 由于版权问题自 yahoo CMAK 3.0.0.x起，不再使用apache kafka manager作为命名
-
-- name: move CMAK files
+- name: copy cmak files
   copy:
-    src: /opt/kafka-manager/cmak-{{ kafka_manager_version }}/
-    dest: /opt/kafka-manager/{{ kafka_manager_version }}
-    mode: "0755"
-    remote_src: yes
+      src: /tmp/cmak-{{ kafka_manager_version }}/
+      dest: "{{ installPath }}/current/"
+      remote_src: yes
 
-- name: create symbolic links
+- name: Remove tmp files
   file:
-    src: /opt/{{ item.name }}/{{ item.version }}/bin/cmak
-    dest: /opt/{{ item.name }}/{{ item.version }}/bin/kafka-manager
-    owner: kafka
-    group: kafka
-    state: link
-  with_items:
-  - name: kafka-manager
-    version: "{{ kafka_manager_version }}"
-
+    path: /tmp/cmak-{{ kafka_manager_version }}
+    state: absent
 
 - name: update permissions of service directories
   file:

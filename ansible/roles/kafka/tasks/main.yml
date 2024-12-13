@@ -1,9 +1,9 @@
 ---
 - name: set variables
   set_fact:
-    kafka_version: 3.1.0   #实际安装版本
-    scala_versions:
-    - 2.13
+    kafka_version: "{{ kafka_version | d('3.8.1') }}"
+    scala_versions: "{{ scala_versions | d(['2.13']) }}"
+    installPath: "/opt/kafka"
 
 - name: install confd files
   include_role:
@@ -42,12 +42,6 @@
     comment: "Service User"
     state: present
 
-- name: install tools
-  apt:
-    update_cache: yes
-    name: ['openjdk-11-jdk','unzip','arping']
-    state: present
-
 - name: copy binaries
   copy: #拷贝service文件
     src: files/opt/
@@ -57,20 +51,30 @@
     mode: preserve
     directory_mode: u=rwx,g=rx,o=
 
-- name: install kafka
-  include_role:
-    name: install
+- include_role:
+    name: downloader
   vars:
     opts:
       pkg_name: kafka
       pkg_version: "{{ item }}-{{ kafka_version }}"
-      pkg_type: tgz
-      pkg_url: "https://archive.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ item }}-{{ kafka_version }}.tgz"
-      extracts: yes
-      creates: "bin/kafka-server-start.sh"
-      target_owner: kafka
-      target_group: kafka
-      bin_path:
+      pkg_feature: "linux"
+      pkg_fileType: ".tgz"
+      pkg_url: "https://dlcdn.apache.org/kafka/{{ kafka_version }}/kafka_{{ item }}-{{ kafka_version }}.tgz"
+  with_items: "{{ scala_versions }}"
+
+- name: prepare dir
+  file:
+    path: "{{ installPath }}/{{ item }}-{{ kafka_version }}"
+    state: directory
+  with_items: "{{ scala_versions }}"
+
+- name: decompress file
+  unarchive:
+    src: "{{ downloaded }}"
+    dest: "{{ installPath }}/{{ item }}-{{ kafka_version }}"
+    creates: "{{ installPath }}/{{ item }}-{{ kafka_version }}/bin/kafka-server-start.sh"
+    extra_opts:
+    - --strip-components=1
   with_items: "{{ scala_versions }}"
 
 - name: install statsd metrics

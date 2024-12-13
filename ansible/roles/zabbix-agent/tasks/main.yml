@@ -1,7 +1,9 @@
 ---
 - name: set variables
   set_fact:
-    zabbix: "3.4"
+    zabbix_version: "{{ zabbix_version | d('7.2') }}"
+    os: "{{ os | d(default_os) }}"
+    osv: "{{ arch | d(default_osv) }}"
 
 - name: install confd files
   include_role:
@@ -32,22 +34,30 @@
   with_items:
     - zabbix
 
-- name: download zabbix deb
-  unarchive:
-    src: https://repo.zabbix.com/zabbix/{{ zabbix }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix }}-1+xenial_all.deb
-    dest: /opt/zabbix
-    creates: /opt/zabbix/
-    remote_src: yes
+# will set var downloaded
+- include_role:
+    name: downloader
+  vars:
+    opts:
+      pkg_name: zabbix-agent
+      pkg_version: "{{ zabbix_version }}"
+      pkg_feature: "linux"
+      pkg_fileType: ".deb"
+      pkg_url: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_{{ zabbix_version }}+ubuntu{{ osv }}_all.deb"
+  when: os == 'ubuntu'
 
-- name: install zabbix agent
-  shell: |
-    dpkg -i zabbix-release_{{ zabbix }}-1+xenial_all.deb
-    apt update 
-    apt -y install zabbix-agent
-  args:
-    chdir: /opt/zabbix/
-    executable: /bin/bash
-    creates: /etc/zabbix/
+- name: copy file
+  copy:
+    src: "{{ downloaded }}"
+    dest: "/tmp"
+  when: os == 'ubuntu'
+
+- name: install
+  apt:
+    deb: "/tmp/{{ downloaded | basename }}"
+    policy_rc_d: 101
+    state: present
+  when: os == 'ubuntu'
 
 - name: disable auto start
   systemd:
