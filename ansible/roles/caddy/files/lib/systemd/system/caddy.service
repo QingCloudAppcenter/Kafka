@@ -8,8 +8,8 @@ ConditionFileNotEmpty=/opt/app/conf/caddy/caddyfile
 [Service]
 Restart=on-abnormal
 
-User=caddy
-Group=caddy
+User=root
+Group=root
 
 Environment=XDG_DATA_HOME=/data
 ; Always set "-root" to something safe in case it gets forgotten in the Caddyfile.

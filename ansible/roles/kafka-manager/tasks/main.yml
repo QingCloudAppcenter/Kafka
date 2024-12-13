@@ -103,6 +103,12 @@
       dest: "{{ installPath }}/current/"
       remote_src: yes
 
+- name: link kafka-manager to cmak
+  file:
+    src: "{{ installPath }}/current/bin/cmak"
+    dest: "{{ installPath }}/current/bin/kafka-manager"
+    state: link
+
 - name: Remove tmp files
   file:
     path: /tmp/cmak-{{ kafka_manager_version }}
