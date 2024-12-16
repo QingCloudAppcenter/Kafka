@@ -77,14 +77,6 @@
     - --strip-components=1
   with_items: "{{ scala_versions }}"
 
-- name: install statsd metrics
-  copy:
-    src: ../deps/kafka-statsd-metrics2-master-0.4.0.jar
-    dest: /opt/kafka/{{ item }}-{{ kafka_version }}/libs
-    owner: kafka
-    group: kafka
-  with_items: "{{ scala_versions }}"
-
 - name: set up version env
   copy:
     dest: /opt/app/bin/envs/version.env

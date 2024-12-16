@@ -127,6 +127,67 @@ parseMetricsForJmx() {
   /opt/kafka/current/bin/kafka-run-class.sh kafka.tools.JmxTool --object-name kafka.$1:type=$2,name=$3 --report-format tsv --one-time true |grep $4| awk '{printf("%.f",$2)}' > /opt/app/conf/appctl/$5.metrics
 }
 
+measure2() {
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-jmx.sh \
+  --object-name java.lang:type=Memory \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=MessagesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec \
+  --object-name kafka.server:type=ReplicaFetcherManager,name=MaxLag,clientId=Replica \
+  --object-name kafka.server:type=ReplicaManager,name=IsrExpandsPerSec \
+  --object-name kafka.controller:type=KafkaController,name=ActiveControllerCount \
+  --object-name kafka.controller:type=KafkaController,name=OfflinePartitionsCount \
+  --report-format tsv --one-time 2>/dev/null > /opt/app/conf/appctl/kafka.metrics
+
+  raw=$(awk '
+/committed=[0-9]+, init=[0-9]+, max=[0-9]+, used=[0-9]+/ {
+    match($0, /used=([0-9]+)/, used);
+    match($0, /max=([0-9]+)/, max);
+    if (max[1] > 0) {
+        percentage = (used[1] / max[1]) * 100;
+        printf("\"heap_usage\":%.f,\n", percentage);
+    }
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=MessagesInPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"MessagesInPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=BytesInPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"BytesInPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=BytesOutPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"BytesOutPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=ReplicaFetcherManager,name=MaxLag,clientId=Replica:Value/ {
+    split($0, fields, " ");
+    printf("\"Replica_MaxLag\":%d,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=ReplicaManager,name=IsrExpandsPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"IsrExpandsPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.controller:type=KafkaController,name=ActiveControllerCount:Value/ {
+    split($0, fields, " ");
+    printf("\"KafkaController_ActiveControllerCount\":%d,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.controller:type=KafkaController,name=OfflinePartitionsCount:Value/ {
+    split($0, fields, " ");
+    printf("\"KafkaController_OfflinePartitionsCount\":%d,\n", fields[length(fields)]);
+    next;
+}
+' /opt/app/conf/appctl/kafka.metrics)
+  echo "{${raw::-1}}"
+}
+
 checkKafkaManager() {
   . /opt/app/bin/envs/appctl.env
   curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
@@ -224,11 +285,11 @@ generate_and_sign_key() {
 }
 
 create_zk_node() {
-  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} create /kafka/${CLUSTER_ID}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/zookeeper-shell.sh ${ZK_NODES} create /kafka/${CLUSTER_ID}
 }
 
 check_zk_node() {
-  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} ls /kafka/${CLUSTER_ID}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/zookeeper-shell.sh ${ZK_NODES} ls /kafka/${CLUSTER_ID}
 }
 
 retry_create_zk_node() {
