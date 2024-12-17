@@ -12,9 +12,9 @@
   "nodes": [{
     "role":"kafka",
     "container": {
-      "type": "lxc",
-      "zone": "ap2a",
-      "image": "img-3awxw5qk"
+      "type": "kvm",
+      "zone": "pek3",
+      "image": "img-a7urjh52"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -52,7 +52,7 @@
     },
     "monitor": {
       "enable": true,
-      "cmd": "appctl measure",
+      "cmd": "appctl measure2",
       "items": {
         "heap_usage": {
           "unit": "%"
@@ -94,8 +94,8 @@
     "user_access": true,
     "container": {
       "type": "kvm",
-      "zone": "ap2a",
-      "image": "img-3awxw5qk"
+      "zone": "pek3",
+      "image": "img-a7urjh52"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -183,10 +183,6 @@
     "jmx": {
       "port": 9999,
       "protocol": "tcp"
-    },
-    "monitor": {
-      "port": 8125,
-      "protocol": "udp"
     }
   }
 }
