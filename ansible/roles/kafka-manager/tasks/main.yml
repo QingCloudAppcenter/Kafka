@@ -124,3 +124,8 @@
   with_items:
     - kafka-manager
 
+- name: setup journald.conf
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    line: 'ForwardToSyslog=no'
+    state: present

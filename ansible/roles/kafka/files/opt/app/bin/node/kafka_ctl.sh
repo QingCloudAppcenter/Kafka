@@ -25,7 +25,32 @@ initNode() {
   log "INFO: Application initialization completed  . "
 }
 
+upgradeInit() {
+  chown -R syslog:adm ${DATA_MOUNTS}/log/appctl
+  chown syslog:syslog ${DATA_MOUNTS}/log/journald/*
+  chown -R kafka:kafka ${DATA_MOUNTS}/$MY_ROLE
+  chown -R kafka:kafka ${DATA_MOUNTS}/log/$MY_ROLE
+  chown -R zabbix:zabbix ${DATA_MOUNTS}/log/zabbix
+  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current
+  ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  touch /opt/app/conf/appctl/kafka.metrics
+  _initNode
+  systemctl restart rsyslog
+}
+
 start() {
+  if [ "$UPGRADING_FLAG" = "true" ]; then
+    upgradeInit
+    if [ "$MY_ROLE" = "kafka" ]; then
+      log "INFO: upgrading from 3.1"
+      log "INFO: set inter.broker.protocol.version=3.1"
+      if grep -q '^inter\.broker\.protocol\.version'; then
+        sed -i 's/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=3.1/' /opt/app/conf/kafka/server.properties
+      else
+        echo "inter.broker.protocol.version=3.1" >> /opt/app/conf/kafka/server.properties
+      fi
+    fi
+  fi
   log "INFO: Application is asked to start . "
   _start || (log "ERROR: services failed to start  . " && return 1)
   if [ "$MY_ROLE" = "kafka-manager" ]; then
@@ -319,4 +344,14 @@ retry_create_zk_node() {
 
   log "Info: Create zk nodes /kafka/${CLUSTER_ID} still returned errors after $tried attempts. Stopping ..."
   return $retCode
+}
+
+upgrade() {
+  log "INFO: wait for node health ok"
+  retry 120 2 0 check
+  sleep 10
+  log "INFO: unset inter.broker.protocol.version=3.1"
+  sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
+  log "INFO: upgrade done!"
+  log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version"
 }

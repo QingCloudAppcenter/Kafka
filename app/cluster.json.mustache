@@ -7,14 +7,15 @@
   },
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
+    "appv-bj0t2o9z"
   ],
-  "upgrading_policy": "parallel",
+  "upgrading_policy": "sequential",
   "nodes": [{
     "role":"kafka",
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-a7urjh52"
+      "image": "img-usshvyu0"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -36,6 +37,11 @@
       },
       "restart": {
         "cmd": "sleep 10; appctl restart"
+      },
+      "upgrade": {
+        "post_start_service": true,
+        "cmd": "appctl upgrade",
+        "timeout": 43200
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -95,7 +101,7 @@
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-a7urjh52"
+      "image": "img-usshvyu0"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
