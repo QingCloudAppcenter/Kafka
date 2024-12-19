@@ -15,7 +15,7 @@
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-usshvyu0"
+      "image": "img-kqzzafmd"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -41,6 +41,11 @@
       "upgrade": {
         "post_start_service": true,
         "cmd": "appctl upgrade",
+        "timeout": 43200
+      },
+      "rolling_restart": {
+        "type": "custom",
+        "cmd": "appctl rollingRestart",
         "timeout": 43200
       }
     },
@@ -101,7 +106,7 @@
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-usshvyu0"
+      "image": "img-kqzzafmd"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},

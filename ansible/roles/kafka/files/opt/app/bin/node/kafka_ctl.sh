@@ -355,3 +355,32 @@ upgrade() {
   log "INFO: upgrade done!"
   log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version"
 }
+
+# check inter.broker.protocol.version
+# current BPV is 3.8
+# $1 count of 3.8
+CURRENT_BPV="3.8"
+checkCurrentBPV() {
+  if [ "$1" -eq 0 ]; then
+    log "INFO: first nodes, skip the check"
+    return 0
+  fi
+
+  raw=$(JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-configs.sh \
+    --command-config /opt/app/conf/kafka/consumer.properties \
+    --bootstrap-server $MY_IP:$MY_PORT --describe --entity-type brokers --all \
+    | grep 'inter\.broker\.protocol\.version' | awk '{print $1}')
+  cnt=$(echo "$raw" | grep -F "$CURRENT_BPV" | wc -l)
+  if [ "$cnt" -lt "$1" ]; then
+    log "INFO: waiting for other nodes restarting: $cnt/$1"
+    return 1
+  fi
+}
+
+rollingRestart() {
+  idx=$(echo "$KAFKA_NODES" | nl | grep -F "$MY_IP" | awk '{print $1}')
+  retry 3600 2 0 checkCurrentBPV $((idx-1))
+
+  log "INFO: restart kafka.service"
+  systemctl restart kafka.service || :
+}
