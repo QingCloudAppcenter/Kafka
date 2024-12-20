@@ -15,7 +15,7 @@
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-kqzzafmd"
+      "image": "img-09mzhmvg"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -106,7 +106,7 @@
     "container": {
       "type": "kvm",
       "zone": "pek3",
-      "image": "img-kqzzafmd"
+      "image": "img-09mzhmvg"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -180,7 +180,10 @@
     "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
     "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
     "kafka-manager.port": {{env.kafka-manager.port}},
-    "kafka.scala.version": {{env.kafka.scala.version}}
+    "kafka.scala.version": {{env.kafka.scala.version}},
+    "jmx-exporter.enable": {{env.jmx-exporter.enable}},
+    "jmx-exporter.port": {{env.jmx-exporter.port}},
+    "jmx-exporter.conf": {{env.jmx-exporter.conf}}
   },
   "endpoints": {
     "client": {

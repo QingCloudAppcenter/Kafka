@@ -1,0 +1,6 @@
+{{ if eq $myRole "kafka" }}
+flush > /opt/app/conf/jmx-exporter/exporter.yaml << JMX_EXPORTER_CONF_EOF
+hostPort: 127.0.0.1:9999
+{{ getv "/env/jmx-exporter.conf" "rules:\n- pattern: \".*\"" }}
+JMX_EXPORTER_CONF_EOF
+{{ end }}

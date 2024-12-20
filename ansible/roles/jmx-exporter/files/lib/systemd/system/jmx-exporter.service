@@ -1,0 +1,12 @@
+[Unit]
+Description=JMX Exporter Service
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/app/conf/jmx-exporter/.env
+ExecStart=/opt/openjdk/current/bin/java -jar /opt/jmx_exporter/current/jmx_prometheus_standalone.jar $EXPORTER_PORT /opt/app/conf/jmx-exporter/exporter.yaml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

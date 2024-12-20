@@ -481,6 +481,32 @@
             "range": ["2.13"],
             "changeable": false,
             "required": "yes"
+        }, {
+            "key": "jmx-exporter.enable",
+            "label": "jmx-exporter.enable",
+            "description": "Enable jmx-exporter or not",
+            "type": "boolean",
+            "default": false,
+            "range": [true, false],
+            "required": "yes"
+        }, {
+            "key": "jmx-exporter.port",
+            "label": "jmx-exporter.port",
+            "description": "The port of jmx-exporter service",
+            "default": 19999,
+            "type": "integer",
+            "min": 9000,
+            "max": 65534,
+            "required": "no"
+        }, {
+            "key": "jmx-exporter.conf",
+            "label": "jmx-exporter.conf",
+            "description": "The configuration of jmx-exporter",
+            "type": "string",
+            "changeable": true,
+            "default": "",
+            "multiline": true,
+            "required": "no"
         }]
     }]
 }

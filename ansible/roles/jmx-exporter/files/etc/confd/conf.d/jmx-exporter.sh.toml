@@ -1,0 +1,8 @@
+[template]
+src = "jmx-exporter.sh.tmpl"
+dest = "/opt/app/bin/tmpl/jmx-exporter.sh"
+mode = "0700"
+keys = [
+  "/",
+]
+reload_cmd = "/opt/app/bin/tmpl/jmx-exporter.sh; appctl reload jmx-exporter"

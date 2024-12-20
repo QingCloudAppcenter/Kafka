@@ -88,12 +88,16 @@ advertised.listeners=PLAINTEXT://{{ $myEip }}:9092
 {{- $key := base .Key }}
 {{- if not (eq (index (split $key ".") 0) "kafka-manager")}}
 {{- if not (eq (index (split $key "_") 0) "ca") }}
+{{- if not (eq (index (split $key ".") 0) "zabbix") }}
+{{- if not (eq (index (split $key ".") 0) "jmx-exporter") }}
 {{- if eq (index (split $key "_") 0) "advertised"}}
 {{- if not (eq (index (split $key "_") 0) "sasl")}}
 {{replace $key "_" "." -1}}={{ .Value }}
 {{- end }}
 {{- else }}
 {{ $key }}={{ .Value }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
