@@ -2,7 +2,7 @@
 - name: set variables
   set_fact:
     kafka_version: "{{ kafka_version | d('3.8.1') }}"
-    scala_versions: "{{ scala_versions | d(['2.13']) }}"
+    scala_version: "{{ scala_version | d('2.13') }}"
     installPath: "/opt/kafka"
 
 - name: install confd files
@@ -56,26 +56,29 @@
   vars:
     opts:
       pkg_name: kafka
-      pkg_version: "{{ item }}-{{ kafka_version }}"
+      pkg_version: "{{ scala_version }}-{{ kafka_version }}"
       pkg_feature: "linux"
       pkg_fileType: ".tgz"
-      pkg_url: "https://dlcdn.apache.org/kafka/{{ kafka_version }}/kafka_{{ item }}-{{ kafka_version }}.tgz"
-  with_items: "{{ scala_versions }}"
+      pkg_url: "https://dlcdn.apache.org/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
 
 - name: prepare dir
   file:
-    path: "{{ installPath }}/{{ item }}-{{ kafka_version }}"
+    path: "{{ installPath }}/{{ scala_version }}-{{ kafka_version }}"
     state: directory
-  with_items: "{{ scala_versions }}"
+
+- name: link for current
+  file:
+    src: "{{ installPath }}/{{ scala_version }}-{{ kafka_version }}"
+    dest: "{{ installPath }}/current"
+    state: link
 
 - name: decompress file
   unarchive:
     src: "{{ downloaded }}"
-    dest: "{{ installPath }}/{{ item }}-{{ kafka_version }}"
-    creates: "{{ installPath }}/{{ item }}-{{ kafka_version }}/bin/kafka-server-start.sh"
+    dest: "{{ installPath }}/{{ scala_version }}-{{ kafka_version }}"
+    creates: "{{ installPath }}/{{ scala_version }}-{{ kafka_version }}/bin/kafka-server-start.sh"
     extra_opts:
     - --strip-components=1
-  with_items: "{{ scala_versions }}"
 
 - name: set up version env
   copy:

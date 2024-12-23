@@ -47,7 +47,7 @@
                 "description": "CPUs of each node",
                 "type": "integer",
                 "default": 2,
-                "range": [2, 4, 8, 12, 16],
+                "range": [1, 2, 4, 8, 12, 16],
                 "required": "yes"
             }, {
                 "key": "memory",
@@ -473,15 +473,6 @@
             "max": 60000,
             "required": "no"
         }, {
-            "key": "kafka.scala.version",
-            "label": "kafka.scala.version",
-            "description": "The scala version of kafka instance used",
-            "default": "2.13",
-            "type": "string",
-            "range": ["2.13"],
-            "changeable": false,
-            "required": "yes"
-        }, {
             "key": "jmx-exporter.enable",
             "label": "jmx-exporter.enable",
             "description": "Enable jmx-exporter or not",
@@ -507,6 +498,19 @@
             "default": "",
             "multiline": true,
             "required": "no"
+        }]
+    }, {
+        "key": "service_params",
+        "description": "custom service configuration properties",
+        "type": "array",
+        "properties":[{
+            "key": "rollingType",
+            "label": "rollingType",
+            "type": "string",
+            "description": "rolling restart kafka nodes to upgrade\n1. ibpv: inter.broker.protocol.version\n2. lmfv: log.message.format.version",
+            "range": ["ibpv", "lmfv"],
+            "default": "ibpv",
+            "required": "yes"
         }]
     }]
 }

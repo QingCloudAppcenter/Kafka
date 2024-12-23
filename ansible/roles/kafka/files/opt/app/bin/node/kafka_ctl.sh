@@ -2,7 +2,6 @@
 
 initNode() {
   log "INFO: Application is about to initialize . "
-  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
   echo 'ubuntu:zhu1241jie' | chpasswd;
   if [ "$MY_ROLE" = "kafka-manager" ]; then
@@ -26,15 +25,15 @@ initNode() {
 }
 
 upgradeInit() {
+  _initNode
+  mkdir -p ${DATA_MOUNTS}/log/zabbix/logs ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
   chown -R syslog:adm ${DATA_MOUNTS}/log/appctl
   chown syslog:syslog ${DATA_MOUNTS}/log/journald/*
   chown -R kafka:kafka ${DATA_MOUNTS}/$MY_ROLE
   chown -R kafka:kafka ${DATA_MOUNTS}/log/$MY_ROLE
   chown -R zabbix:zabbix ${DATA_MOUNTS}/log/zabbix
-  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current
   ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
   touch /opt/app/conf/appctl/kafka.metrics
-  _initNode
   systemctl restart rsyslog
 }
 
@@ -42,12 +41,18 @@ start() {
   if [ "$UPGRADING_FLAG" = "true" ]; then
     upgradeInit
     if [ "$MY_ROLE" = "kafka" ]; then
-      log "INFO: upgrading from 3.1"
-      log "INFO: set inter.broker.protocol.version=3.1"
+      log "INFO: upgrading from $OLD_IBPV"
+      log "INFO: set inter.broker.protocol.version to $OLD_IBPV"
       if grep -q '^inter\.broker\.protocol\.version'; then
-        sed -i 's/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=3.1/' /opt/app/conf/kafka/server.properties
+        sed -i "s/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=$OLD_IBPV/" /opt/app/conf/kafka/server.properties
       else
-        echo "inter.broker.protocol.version=3.1" >> /opt/app/conf/kafka/server.properties
+        echo "inter.broker.protocol.version=$OLD_IBPV" >> /opt/app/conf/kafka/server.properties
+      fi
+      log "INFO: set log.message.format.version to $OLD_LMFV"
+      if grep -q '^log\.message\.format\.version'; then
+        sed -i "s/^log\.message\.format\.version=.*/log.message.format.version=$OLD_LMFV/" /opt/app/conf/kafka/server.properties
+      else
+        echo "log.message.format.version=$OLD_LMFV" >> /opt/app/conf/kafka/server.properties
       fi
     fi
   fi
@@ -350,10 +355,10 @@ upgrade() {
   log "INFO: wait for node health ok"
   retry 120 2 0 check
   sleep 10
-  log "INFO: unset inter.broker.protocol.version=3.1"
-  sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
+  # log "INFO: unset inter.broker.protocol.version=3.1"
+  # sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
   log "INFO: upgrade done!"
-  log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version"
+  log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version and log.message.format.version"
 }
 
 # check inter.broker.protocol.version
@@ -377,7 +382,10 @@ checkCurrentBPV() {
   fi
 }
 
-rollingRestart() {
+postUpgradeRestart() {
+  echo "$@"
+  sleep 3600
+
   idx=$(echo "$KAFKA_NODES" | nl | grep -F "$MY_IP" | awk '{print $1}')
   retry 3600 2 0 checkCurrentBPV $((idx-1))
 

@@ -1,7 +1,7 @@
 appAgentVersion: v1.0.7
 arping_version: "20211215-1"
 kafka_version: "3.8.1"
-scala_versions: ['2.13']
+scala_version: '2.13'
 openjdk_version: "21.0.2"
 kafka_manager_version: "3.0.0.6"
 zabbix_version: "7.2"
