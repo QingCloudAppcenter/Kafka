@@ -355,17 +355,15 @@ upgrade() {
   log "INFO: wait for node health ok"
   retry 120 2 0 check
   sleep 10
-  # log "INFO: unset inter.broker.protocol.version=3.1"
-  # sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
   log "INFO: upgrade done!"
   log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version and log.message.format.version"
 }
 
 # check inter.broker.protocol.version
-# current BPV is 3.8
+# current IBPV is 3.8
 # $1 count of 3.8
-CURRENT_BPV="3.8"
-checkCurrentBPV() {
+CURRENT_IBPV="3.8"
+checkCurrentIBPV() {
   if [ "$1" -eq 0 ]; then
     log "INFO: first nodes, skip the check"
     return 0
@@ -375,7 +373,7 @@ checkCurrentBPV() {
     --command-config /opt/app/conf/kafka/consumer.properties \
     --bootstrap-server $MY_IP:$MY_PORT --describe --entity-type brokers --all \
     | grep 'inter\.broker\.protocol\.version' | awk '{print $1}')
-  cnt=$(echo "$raw" | grep -F "$CURRENT_BPV" | wc -l)
+  cnt=$(echo "$raw" | grep -F "$CURRENT_IBPV" | wc -l)
   if [ "$cnt" -lt "$1" ]; then
     log "INFO: waiting for other nodes restarting: $cnt/$1"
     return 1
@@ -383,12 +381,30 @@ checkCurrentBPV() {
 }
 
 postUpgradeRestart() {
-  echo "$@"
-  sleep 3600
-
+  rollingType=$(echo "$@" | grep -o '"rollingType":"[^"]*"' | sed 's/"rollingType":"//;s/"//')
+  if [ -z "$rollingType" ]; then
+    log "INFO: unknown rolling type, do noting"
+    return 0
+  fi
+  
   idx=$(echo "$KAFKA_NODES" | nl | grep -F "$MY_IP" | awk '{print $1}')
-  retry 3600 2 0 checkCurrentBPV $((idx-1))
-
-  log "INFO: restart kafka.service"
-  systemctl restart kafka.service || :
+  if [ "$rollingType" = "ibpv" ]; then
+    log "INFO: remove inter.broker.protocol.version for restart"
+    sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
+    retry 3600 2 0 checkCurrentIBPV $((idx-1))
+    log "INFO: restart kafka.service"
+    systemctl restart kafka.service || :
+  elif [ "$rollingType" = "lmfv" ]; then
+    if grep -q '^inter\.broker\.protocol\.version'; then
+      log "ERROR: inter.broker.protocol.version has value, please unset it"
+      return 1
+    fi
+    log "INFO: remove log.message.format.version for restart"
+    sed -i '/^log\.message\.format\.version/d' /opt/app/conf/kafka/server.properties
+    retry 3600 2 0 checkCurrentLMFV $((idx-1))
+    log "INFO: restart kafka.service"
+    systemctl restart kafka.service || :
+  else
+    log "INFO: unknown rolling type, do noting"
+  fi
 }
