@@ -37,22 +37,27 @@ upgradeInit() {
   systemctl restart rsyslog
 }
 
+
+CURRENT_LMFV="3.0"
+KAFKA_PROPERTIES_FILE=/opt/app/conf/kafka/server.properties
 start() {
   if [ "$UPGRADING_FLAG" = "true" ]; then
     upgradeInit
     if [ "$MY_ROLE" = "kafka" ]; then
       log "INFO: upgrading from $OLD_IBPV"
       log "INFO: set inter.broker.protocol.version to $OLD_IBPV"
-      if grep -q '^inter\.broker\.protocol\.version'; then
-        sed -i "s/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=$OLD_IBPV/" /opt/app/conf/kafka/server.properties
+      if grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
+        sed -i "s/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=$OLD_IBPV/" $KAFKA_PROPERTIES_FILE
       else
-        echo "inter.broker.protocol.version=$OLD_IBPV" >> /opt/app/conf/kafka/server.properties
+        echo "inter.broker.protocol.version=$OLD_IBPV" >> $KAFKA_PROPERTIES_FILE
       fi
-      log "INFO: set log.message.format.version to $OLD_LMFV"
-      if grep -q '^log\.message\.format\.version'; then
-        sed -i "s/^log\.message\.format\.version=.*/log.message.format.version=$OLD_LMFV/" /opt/app/conf/kafka/server.properties
-      else
-        echo "log.message.format.version=$OLD_LMFV" >> /opt/app/conf/kafka/server.properties
+      if [ "$CURRENT_LMFV" != "$OLD_LMFV" ]; then
+        log "INFO: set log.message.format.version to $OLD_LMFV"
+        if grep -q '^log\.message\.format\.version' $KAFKA_PROPERTIES_FILE; then
+          sed -i "s/^log\.message\.format\.version=.*/log.message.format.version=$OLD_LMFV/" $KAFKA_PROPERTIES_FILE
+        else
+          echo "log.message.format.version=$OLD_LMFV" >> $KAFKA_PROPERTIES_FILE
+        fi
       fi
     fi
   fi
@@ -380,6 +385,23 @@ checkCurrentIBPV() {
   fi
 }
 
+checkCurrentLMFV() {
+  if [ "$1" -eq 0 ]; then
+    log "INFO: first nodes, skip the check"
+    return 0
+  fi
+
+  raw=$(JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-configs.sh \
+    --command-config /opt/app/conf/kafka/consumer.properties \
+    --bootstrap-server $MY_IP:$MY_PORT --describe --entity-type brokers --all \
+    | grep 'log\.message\.format\.version' | awk '{print $1}')
+  cnt=$(echo "$raw" | grep -F "$CURRENT_LMFV" | wc -l)
+  if [ "$cnt" -lt "$1" ]; then
+    log "INFO: waiting for other nodes restarting: $cnt/$1"
+    return 1
+  fi
+}
+
 postUpgradeRestart() {
   rollingType=$(echo "$@" | grep -o '"rollingType":"[^"]*"' | sed 's/"rollingType":"//;s/"//')
   if [ -z "$rollingType" ]; then
@@ -388,23 +410,27 @@ postUpgradeRestart() {
   fi
   
   idx=$(echo "$KAFKA_NODES" | nl | grep -F "$MY_IP" | awk '{print $1}')
-  if [ "$rollingType" = "ibpv" ]; then
+  if [ "$rollingType" = "ibpv" ] && grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
     log "INFO: remove inter.broker.protocol.version for restart"
-    sed -i '/^inter\.broker\.protocol\.version/d' /opt/app/conf/kafka/server.properties
+    sed -i '/^inter\.broker\.protocol\.version/d' $KAFKA_PROPERTIES_FILE
     retry 3600 2 0 checkCurrentIBPV $((idx-1))
     log "INFO: restart kafka.service"
     systemctl restart kafka.service || :
-  elif [ "$rollingType" = "lmfv" ]; then
-    if grep -q '^inter\.broker\.protocol\.version'; then
-      log "ERROR: inter.broker.protocol.version has value, please unset it"
+    return 0
+  fi
+
+  if [ "$rollingType" = "lmfv" ] && grep -q '^log\.message\.format\.version' $KAFKA_PROPERTIES_FILE; then
+    if grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
+      log "ERROR: inter.broker.protocol.version has value, please unset it first"
       return 1
     fi
     log "INFO: remove log.message.format.version for restart"
-    sed -i '/^log\.message\.format\.version/d' /opt/app/conf/kafka/server.properties
+    sed -i '/^log\.message\.format\.version/d' $KAFKA_PROPERTIES_FILE
     retry 3600 2 0 checkCurrentLMFV $((idx-1))
     log "INFO: restart kafka.service"
     systemctl restart kafka.service || :
-  else
-    log "INFO: unknown rolling type, do noting"
+    return 0
   fi
+
+  log "INFO: no condition met for rolling restart, do noting"
 }
