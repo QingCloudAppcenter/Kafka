@@ -507,7 +507,7 @@
             "key": "rollingType",
             "label": "rollingType",
             "type": "string",
-            "description": "rolling restart kafka nodes to upgrade\n1. ibpv: inter.broker.protocol.version\n2. lmfv: log.message.format.version",
+            "description": "!!!ONLY RUN AFTER UPGRADING. NOT FOR NORMAL USE!!!\nrolling restart kafka nodes to update settings.\nfirst rolling for updating(ibpv): inter.broker.protocol.version\nsecond rolling for updating(lmfv): log.message.format.version",
             "range": ["ibpv", "lmfv"],
             "default": "ibpv",
             "required": "yes"

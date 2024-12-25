@@ -83,5 +83,9 @@
     "The minimum allowed session timeout for registered consumers": "已注册消费者最短会话超时时长",
     "notice_when_upgrade": "此版本包含不兼容 Kafka 1.x 版本的改动，可能会导致业务代码异常退出并无法回退！为避免损失，强烈建议先创建一个新集群进行验证，确保可以工作以后再进行升级操作。Kafka 2.3 版本说明请查看官方文档：https://kafka.apache.org/documentation/",
     "kafka.scala.version": "kafka 实例使用的 Scala 版本",
-    "The scala version of kafka instance used": "kafka 实例使用的 Scala 版本, 默认为 2.13，推荐使用 2.13"
+    "The scala version of kafka instance used": "kafka 实例使用的 Scala 版本, 默认为 2.13，推荐使用 2.13",
+    "!!!ONLY RUN AFTER UPGRADING. NOT FOR NORMAL USE!!!\nrolling restart kafka nodes to update settings.\nfirst rolling for updating(ibpv): inter.broker.protocol.version\nsecond rolling for updating(lmfv): log.message.format.version": "!!!仅在版本升级后使用。普通情况下禁止使用!!!<br/>滚动重启 kafka 更新相关参数<br/>第一次滚动重启, 更新参数(ibpv): inter.broker.protocol.version<br/>第二次滚动重启, 更新参数(lmfv): log.message.format.version",
+    "Enable jmx-exporter or not": "是否开启 jmx-exporter",
+    "The port of jmx-exporter service": "jmx-exporter 使用的端口，默认为19999",
+    "The configuration of jmx-exporter": "jmx-exporter 配置，参考 https://github.com/prometheus/jmx_exporter/tree/main/examples"
   }
