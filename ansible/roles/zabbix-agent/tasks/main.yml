@@ -3,7 +3,7 @@
   set_fact:
     zabbix_version: "{{ zabbix_version | d('7.2') }}"
     os: "{{ os | d(default_os) }}"
-    osv: "{{ arch | d(default_osv) }}"
+    osv: "{{ osv | d(default_osv) }}"
 
 - name: install confd files
   include_role:
@@ -46,23 +46,44 @@
       pkg_url: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_{{ zabbix_version }}+ubuntu{{ osv }}_all.deb"
   when: os == 'ubuntu'
 
+- name: set centos version
+  set_fact:
+    centos_version: '8'
+  when: os == 'kylin'
+
+- include_role:
+    name: downloader
+  vars:
+    opts:
+      pkg_name: zabbix-agent
+      pkg_version: "{{ zabbix_version }}"
+      pkg_feature: "linux"
+      pkg_fileType: ".rpm"
+      pkg_url: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/release/centos/{{ centos_version }}/noarch/zabbix-release-latest-{{ zabbix_version }}.el{{ centos_version }}.noarch.rpm"
+  when: os == 'kylin'
+
 - name: copy file
   copy:
     src: "{{ downloaded }}"
     dest: "/tmp"
-  when: os == 'ubuntu'
 
-- name: install
+- name: install - ubuntu
   apt:
     deb: "/tmp/{{ downloaded | basename }}"
     policy_rc_d: 101
     state: present
   when: os == 'ubuntu'
 
-- name: disable auto start
+- name: install - kylin
+  dnf:
+    name: "/tmp/{{ downloaded | basename }}"
+    disable_gpg_check: true
+    state: present
+  when: os == 'kylin'
+
+- name: mask service
   systemd:
     name: "{{ svc_name }}"
-    state: stopped
     masked: yes
   loop:
   - zabbix-agent
