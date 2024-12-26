@@ -23,5 +23,7 @@
     - zabbix-agent
     - jmx-exporter
     - users_groups
+    - crashkernel
+    - pwquality
     loop_control:
       loop_var: service_name

@@ -1,0 +1,8 @@
+---
+- name: reset pwquality config
+  copy:
+    dest: /etc/security/pwquality.conf.d/qingcloud.conf
+    content: |
+      minclass = 2
+      minlen = 6
+    mode: '0644'

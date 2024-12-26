@@ -4,7 +4,7 @@ initNode() {
   log "INFO: Application is about to initialize . "
   _initNode
   if [ "$MY_ROLE" = "kafka-manager" ]; then
-    echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
+    echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client123" | chpasswd;
     log "INFO: Application initialize password for client user. "
   fi
 

@@ -1,12 +1,6 @@
 mkdir -p /etc/zabbix/zabbix_agentd.d/
 
-{{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
-{{- $myRole := index $roleMap (getv "/host/role") }}
-
 {{ if eq $myRole "kafka" }}
-
-sed -i 's/zabbix-agent\/\(true\|false\)/zabbix-agent\/{{ getv "/env/zabbix.agent.enable" "false" }}/' /opt/app/bin/envs/services.env
-
 flush > /etc/zabbix/zabbix_agentd.conf << ZABBIX_EOF
 PidFile=/var/run/zabbix/zabbix_agentd.pid
 LogFile=/data/log/zabbix/zabbix_agentd.log

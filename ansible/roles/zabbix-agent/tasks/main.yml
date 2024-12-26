@@ -74,16 +74,23 @@
     state: present
   when: os == 'ubuntu'
 
-- name: install - kylin
+- name: install repo - kylin
   dnf:
     name: "/tmp/{{ downloaded | basename }}"
     disable_gpg_check: true
     state: present
   when: os == 'kylin'
 
+- name: install agent - kylin
+  dnf:
+    name: zabbix-agent
+    state: present
+  when: os == 'kylin'
+
 - name: mask service
   systemd:
     name: "{{ svc_name }}"
+    state: stopped
     masked: yes
   loop:
   - zabbix-agent
