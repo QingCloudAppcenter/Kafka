@@ -3,8 +3,10 @@
 initNode() {
   log "INFO: Application is about to initialize . "
   _initNode
+  chmod 755 ${DATA_MOUNTS}/log # kylin: sometimes 700
   if [ "$MY_ROLE" = "kafka-manager" ]; then
-    echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client123" | chpasswd;
+    adduser client > /dev/nul 2>&1 || :
+    echo "client:p@33w0rd" | chpasswd || :
     log "INFO: Application initialize password for client user. "
   fi
 
