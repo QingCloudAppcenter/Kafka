@@ -1,5 +1,10 @@
 mkdir -p ${DATA_MOUNTS}/log/journald/
-chmod 777 ${DATA_MOUNTS}/log/journald/
+currentOs=$(sed -n '/^ID=/p' /etc/os-release | sed 's/^ID=//' | sed 's/"//g')
+if [ "$currentOs" = "kylin" ]; then
+  chmod 750 ${DATA_MOUNTS}/log/journald/
+else
+  chmod 777 ${DATA_MOUNTS}/log/journald/
+fi
 flush /etc/rsyslog.d/49-journald.conf << JOURNALD_CONFIG_EOF
 module(load="imjournal" PersistStateInterval="100") #load imjournal module
 module(load="mmjsonparse") #load mmjsonparse module for structured logs
