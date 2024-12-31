@@ -73,6 +73,10 @@ start() {
 }
 
 reload() {
+  if ! isNodeInitialized; then
+    log "INFO: node is not initialized, skip reload"
+    return 0
+  fi
   log "INFO: Application is asked to reload  . "
   _reload $@
   if [ "$MY_ROLE" == "kafka-manager" ] && echo "$@" | grep -q 'kafka-manager'; then
