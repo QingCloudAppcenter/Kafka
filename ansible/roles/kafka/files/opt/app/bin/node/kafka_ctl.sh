@@ -75,9 +75,9 @@ start() {
 reload() {
   log "INFO: Application is asked to reload  . "
   _reload $@
-  if [ "$MY_ROLE" == "kafka-manager" ]; then
-    addCluster || log "Failed to addCluster when update";
-    updateCluster || log "Failed to updateCluster when update";
+  if [ "$MY_ROLE" == "kafka-manager" ] && echo "$@" | grep -q 'kafka-manager'; then
+    retry 20 2 0 addCluster || log "Failed to addCluster when update";
+    retry 10 2 0 updateCluster || log "Failed to updateCluster when update";
   fi
   log "INFO: Application reloaded completely . "
 }
