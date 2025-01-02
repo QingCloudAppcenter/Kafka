@@ -67,10 +67,16 @@
     src: "{{ downloaded }}"
     dest: "/tmp"
 
-- name: install - ubuntu
+- name: install repo - ubuntu
   apt:
     deb: "/tmp/{{ downloaded | basename }}"
     policy_rc_d: 101
+    state: present
+  when: os == 'ubuntu'
+
+- name: install agent - ubuntu
+  apt:
+    name: zabbix-agent
     state: present
   when: os == 'ubuntu'
 
