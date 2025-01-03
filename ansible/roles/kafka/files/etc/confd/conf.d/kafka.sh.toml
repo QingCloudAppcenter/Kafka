@@ -5,4 +5,4 @@ mode = "0700"
 keys = [
   "/",
 ]
-reload_cmd = "/opt/app/bin/tmpl/kafka.sh; appctl reload kafka"
+reload_cmd = "/opt/app/bin/tmpl/kafka.sh; sleep 5; appctl reload kafka"
