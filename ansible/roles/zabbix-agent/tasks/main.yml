@@ -106,7 +106,7 @@
 - name: fix logrotate config
   lineinfile:
     path: /etc/logrotate.d/zabbix-agent
-    regexp: '^/var/log/zabbix/zabbix_agentd.log {'
+    regexp: '^/.*/zabbix_agentd.log {'
     line: '/data/log/zabbix/zabbix_agentd.log {'
     state: present
 
