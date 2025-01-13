@@ -1,0 +1,10 @@
+- name: set up variables
+  set_fact:
+    os: "{{ os | d(default_os) }}"
+
+- name: install tools
+  apt:
+    name: ['unzip']
+    state: present
+    update_cache: yes
+  when: os == 'ubuntu'

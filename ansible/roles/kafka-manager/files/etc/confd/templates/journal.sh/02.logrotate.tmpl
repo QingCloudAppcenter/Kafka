@@ -6,8 +6,9 @@ ${DATA_MOUNTS}/log/journald/journald.log {
     notifempty
     compress
     delaycompress
+    copytruncate
     postrotate
-        invoke-rc.d rsyslog rotate >/dev/null 2>&1 || true
+        /usr/bin/systemctl kill -s HUP rsyslog.service >/dev/null 2>&1 || true
     endscript
 }
 LOGROTATE_EOF

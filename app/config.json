@@ -47,7 +47,7 @@
                 "description": "CPUs of each node",
                 "type": "integer",
                 "default": 2,
-                "range": [2, 4, 8, 12, 16],
+                "range": [1, 2, 4, 8, 12, 16],
                 "required": "yes"
             }, {
                 "key": "memory",
@@ -473,13 +473,43 @@
             "max": 60000,
             "required": "no"
         }, {
-            "key": "kafka.scala.version",
-            "label": "kafka.scala.version",
-            "description": "The scala version of kafka instance used",
-            "default": "2.13",
+            "key": "jmx-exporter.enable",
+            "label": "jmx-exporter.enable",
+            "description": "Enable jmx-exporter or not",
+            "type": "boolean",
+            "default": false,
+            "range": [true, false],
+            "required": "yes"
+        }, {
+            "key": "jmx-exporter.port",
+            "label": "jmx-exporter.port",
+            "description": "The port of jmx-exporter service",
+            "default": 19999,
+            "type": "integer",
+            "min": 9000,
+            "max": 65534,
+            "required": "no"
+        }, {
+            "key": "jmx-exporter.conf",
+            "label": "jmx-exporter.conf",
+            "description": "The configuration of jmx-exporter",
             "type": "string",
-            "range": ["2.13"],
-            "changeable": false,
+            "changeable": true,
+            "default": "",
+            "multiline": true,
+            "required": "no"
+        }]
+    }, {
+        "key": "service_params",
+        "description": "custom service configuration properties",
+        "type": "array",
+        "properties":[{
+            "key": "rollingType",
+            "label": "rollingType",
+            "type": "string",
+            "description": "!!!ONLY RUN AFTER UPGRADING. NOT FOR NORMAL USE!!!\nrolling restart kafka nodes to update settings.\nfirst rolling for updating(ibpv): inter.broker.protocol.version\nsecond rolling for updating(lmfv): log.message.format.version",
+            "range": ["ibpv", "lmfv"],
+            "default": "ibpv",
             "required": "yes"
         }]
     }]

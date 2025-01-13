@@ -4,4 +4,8 @@
   rotate 5
   missingok
   notifempty
+  copytruncate
+  postrotate
+    /usr/bin/systemctl kill -s HUP rsyslog.service >/dev/null 2>&1 || true
+  endscript
 }

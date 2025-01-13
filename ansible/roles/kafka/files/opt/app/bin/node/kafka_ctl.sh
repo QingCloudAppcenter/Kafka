@@ -2,11 +2,11 @@
 
 initNode() {
   log "INFO: Application is about to initialize . "
-  ln -snf /opt/kafka/${KAFKA_SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/current  # default version 2.11
   _initNode
-  echo 'ubuntu:zhu1241jie' | chpasswd;
+  chmod 755 ${DATA_MOUNTS}/log # kylin: sometimes 700
   if [ "$MY_ROLE" = "kafka-manager" ]; then
-    echo -e "client\nclient\n" | adduser client > /dev/nul 2>&1 || echo "client:client" | chpasswd;
+    adduser client > /dev/nul 2>&1 || :
+    echo "client:p@33w0rd" | chpasswd || :
     log "INFO: Application initialize password for client user. "
   fi
 
@@ -25,23 +25,63 @@ initNode() {
   log "INFO: Application initialization completed  . "
 }
 
+upgradeInit() {
+  _initNode
+  mkdir -p ${DATA_MOUNTS}/log/zabbix/logs ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
+  chown -R syslog:adm ${DATA_MOUNTS}/log/appctl
+  chown syslog:syslog ${DATA_MOUNTS}/log/journald/*
+  chown -R kafka:kafka ${DATA_MOUNTS}/$MY_ROLE
+  chown -R kafka:kafka ${DATA_MOUNTS}/log/$MY_ROLE
+  chown -R zabbix:zabbix ${DATA_MOUNTS}/log/zabbix
+  ln -sf /opt/app/bin/node/kfkctl.sh  /usr/bin/kfkctl
+  touch /opt/app/conf/appctl/kafka.metrics
+  systemctl restart rsyslog
+}
+
+
+CURRENT_LMFV="3.0"
+KAFKA_PROPERTIES_FILE=/opt/app/conf/kafka/server.properties
 start() {
+  if [ "$UPGRADING_FLAG" = "true" ]; then
+    upgradeInit
+    if [ "$MY_ROLE" = "kafka" ]; then
+      log "INFO: upgrading from $OLD_IBPV"
+      log "INFO: set inter.broker.protocol.version to $OLD_IBPV"
+      if grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
+        sed -i "s/^inter\.broker\.protocol\.version=.*/inter.broker.protocol.version=$OLD_IBPV/" $KAFKA_PROPERTIES_FILE
+      else
+        echo "inter.broker.protocol.version=$OLD_IBPV" >> $KAFKA_PROPERTIES_FILE
+      fi
+      if [ "$CURRENT_LMFV" != "$OLD_LMFV" ]; then
+        log "INFO: set log.message.format.version to $OLD_LMFV"
+        if grep -q '^log\.message\.format\.version' $KAFKA_PROPERTIES_FILE; then
+          sed -i "s/^log\.message\.format\.version=.*/log.message.format.version=$OLD_LMFV/" $KAFKA_PROPERTIES_FILE
+        else
+          echo "log.message.format.version=$OLD_LMFV" >> $KAFKA_PROPERTIES_FILE
+        fi
+      fi
+    fi
+  fi
   log "INFO: Application is asked to start . "
   _start || (log "ERROR: services failed to start  . " && return 1)
   if [ "$MY_ROLE" = "kafka-manager" ]; then
     local httpCode
-    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" == "200" ] || log "Failed to add cluster automatically with '$httpCode'.";
+    httpCode="$(retry 10 2 0 addCluster)" && [ "$httpCode" -eq "200" ] || log "Failed to add cluster automatically with '$httpCode'.";
     updateCluster || log "Failed to updateCluster when update";
   fi
   log "INFO: Application started successfully  . "
 }
 
 reload() {
+  if ! isNodeInitialized; then
+    log "INFO: node is not initialized, skip reload"
+    return 0
+  fi
   log "INFO: Application is asked to reload  . "
   _reload $@
-  if [ "$MY_ROLE" == "kafka-manager" ]; then
-    addCluster || log "Failed to addCluster when update";
-    updateCluster || log "Failed to updateCluster when update";
+  if [ "$MY_ROLE" == "kafka-manager" ] && echo "$@" | grep -q 'kafka-manager'; then
+    retry 20 2 0 addCluster || log "Failed to addCluster when update";
+    retry 10 2 0 updateCluster || log "Failed to updateCluster when update";
   fi
   log "INFO: Application reloaded completely . "
 }
@@ -125,6 +165,67 @@ parseMetricsForJmxAll() {
 
 parseMetricsForJmx() {
   /opt/kafka/current/bin/kafka-run-class.sh kafka.tools.JmxTool --object-name kafka.$1:type=$2,name=$3 --report-format tsv --one-time true |grep $4| awk '{printf("%.f",$2)}' > /opt/app/conf/appctl/$5.metrics
+}
+
+measure2() {
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-jmx.sh \
+  --object-name java.lang:type=Memory \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=MessagesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec \
+  --object-name kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec \
+  --object-name kafka.server:type=ReplicaFetcherManager,name=MaxLag,clientId=Replica \
+  --object-name kafka.server:type=ReplicaManager,name=IsrExpandsPerSec \
+  --object-name kafka.controller:type=KafkaController,name=ActiveControllerCount \
+  --object-name kafka.controller:type=KafkaController,name=OfflinePartitionsCount \
+  --report-format tsv --one-time 2>/dev/null > /opt/app/conf/appctl/kafka.metrics
+
+  raw=$(awk '
+/committed=[0-9]+, init=[0-9]+, max=[0-9]+, used=[0-9]+/ {
+    match($0, /used=([0-9]+)/, used);
+    match($0, /max=([0-9]+)/, max);
+    if (max[1] > 0) {
+        percentage = (used[1] / max[1]) * 100;
+        printf("\"heap_usage\":%.f,\n", percentage);
+    }
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=MessagesInPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"MessagesInPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=BytesInPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"BytesInPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=BrokerTopicMetrics,name=BytesOutPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"BytesOutPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=ReplicaFetcherManager,name=MaxLag,clientId=Replica:Value/ {
+    split($0, fields, " ");
+    printf("\"Replica_MaxLag\":%d,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.server:type=ReplicaManager,name=IsrExpandsPerSec:OneMinuteRate/ {
+    split($0, fields, " ");
+    printf("\"IsrExpandsPerSec_1MinuteRate\":%.f,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.controller:type=KafkaController,name=ActiveControllerCount:Value/ {
+    split($0, fields, " ");
+    printf("\"KafkaController_ActiveControllerCount\":%d,\n", fields[length(fields)]);
+    next;
+}
+/kafka\.controller:type=KafkaController,name=OfflinePartitionsCount:Value/ {
+    split($0, fields, " ");
+    printf("\"KafkaController_OfflinePartitionsCount\":%d,\n", fields[length(fields)]);
+    next;
+}
+' /opt/app/conf/appctl/kafka.metrics)
+  echo "{${raw::-1}}"
 }
 
 checkKafkaManager() {
@@ -224,11 +325,11 @@ generate_and_sign_key() {
 }
 
 create_zk_node() {
-  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} create /kafka/${CLUSTER_ID}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/zookeeper-shell.sh ${ZK_NODES} create /kafka/${CLUSTER_ID}
 }
 
 check_zk_node() {
-  /opt/kafka/current//bin/zookeeper-shell.sh ${ZK_NODES} ls /kafka/${CLUSTER_ID}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/zookeeper-shell.sh ${ZK_NODES} ls /kafka/${CLUSTER_ID}
 }
 
 retry_create_zk_node() {
@@ -258,4 +359,83 @@ retry_create_zk_node() {
 
   log "Info: Create zk nodes /kafka/${CLUSTER_ID} still returned errors after $tried attempts. Stopping ..."
   return $retCode
+}
+
+upgrade() {
+  log "INFO: wait for node health ok"
+  retry 120 2 0 check
+  sleep 10
+  log "INFO: upgrade done!"
+  log "WARN: be sure to rolling restart kafka again to set proper inter.broker.protocol.version and log.message.format.version"
+}
+
+# check inter.broker.protocol.version
+# current IBPV is 3.8
+# $1 count of 3.8
+CURRENT_IBPV="3.8"
+checkCurrentIBPV() {
+  if [ "$1" -eq 0 ]; then
+    log "INFO: first nodes, skip the check"
+    return 0
+  fi
+
+  raw=$(JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-configs.sh \
+    --command-config /opt/app/conf/kafka/consumer.properties \
+    --bootstrap-server $MY_IP:$MY_PORT --describe --entity-type brokers --all \
+    | grep 'inter\.broker\.protocol\.version' | awk '{print $1}')
+  cnt=$(echo "$raw" | grep -F "$CURRENT_IBPV" | wc -l)
+  if [ "$cnt" -lt "$1" ]; then
+    log "INFO: waiting for other nodes restarting: $cnt/$1"
+    return 1
+  fi
+}
+
+checkCurrentLMFV() {
+  if [ "$1" -eq 0 ]; then
+    log "INFO: first nodes, skip the check"
+    return 0
+  fi
+
+  raw=$(JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-configs.sh \
+    --command-config /opt/app/conf/kafka/consumer.properties \
+    --bootstrap-server $MY_IP:$MY_PORT --describe --entity-type brokers --all \
+    | grep 'log\.message\.format\.version' | awk '{print $1}')
+  cnt=$(echo "$raw" | grep -F "$CURRENT_LMFV" | wc -l)
+  if [ "$cnt" -lt "$1" ]; then
+    log "INFO: waiting for other nodes restarting: $cnt/$1"
+    return 1
+  fi
+}
+
+postUpgradeRestart() {
+  rollingType=$(echo "$@" | grep -o '"rollingType":"[^"]*"' | sed 's/"rollingType":"//;s/"//')
+  if [ -z "$rollingType" ]; then
+    log "INFO: unknown rolling type, do noting"
+    return 0
+  fi
+  
+  idx=$(echo "$KAFKA_NODES" | nl | grep -F "$MY_IP" | awk '{print $1}')
+  if [ "$rollingType" = "ibpv" ] && grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
+    log "INFO: remove inter.broker.protocol.version for restart"
+    sed -i '/^inter\.broker\.protocol\.version/d' $KAFKA_PROPERTIES_FILE
+    retry 3600 2 0 checkCurrentIBPV $((idx-1))
+    log "INFO: restart kafka.service"
+    systemctl restart kafka.service || :
+    return 0
+  fi
+
+  if [ "$rollingType" = "lmfv" ] && grep -q '^log\.message\.format\.version' $KAFKA_PROPERTIES_FILE; then
+    if grep -q '^inter\.broker\.protocol\.version' $KAFKA_PROPERTIES_FILE; then
+      log "ERROR: inter.broker.protocol.version has value, please unset it first"
+      return 1
+    fi
+    log "INFO: remove log.message.format.version for restart"
+    sed -i '/^log\.message\.format\.version/d' $KAFKA_PROPERTIES_FILE
+    retry 3600 2 0 checkCurrentLMFV $((idx-1))
+    log "INFO: restart kafka.service"
+    systemctl restart kafka.service || :
+    return 0
+  fi
+
+  log "INFO: no condition met for rolling restart, do noting"
 }

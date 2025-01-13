@@ -1,5 +1,9 @@
 ---
-- name: remove welcome messages after SSH login
+- name: set vars
+  set_fact:
+    os: "{{ os | d(default_os) }}"
+
+- name: ubuntu
   file:
     path: "{{ remote_usr.home }}/.hushlogin"
     owner: "{{ remote_usr.name }}"
@@ -11,3 +15,19 @@
     home: /root
   loop_control:
     loop_var: remote_usr
+  when: os == 'ubuntu'
+
+- name: kylin - cockpit
+  file:
+    src: /dev/null
+    dest: /etc/motd.d/cockpit
+    state: link
+    force: yes
+  when: os == 'kylin'
+
+- name: kylin - /etc/motd
+  copy:
+    content: ""
+    dest: /etc/motd
+    force: yes
+  when: os == 'kylin'

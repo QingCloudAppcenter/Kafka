@@ -88,6 +88,8 @@ advertised.listeners=PLAINTEXT://{{ $myEip }}:9092
 {{- $key := base .Key }}
 {{- if not (eq (index (split $key ".") 0) "kafka-manager")}}
 {{- if not (eq (index (split $key "_") 0) "ca") }}
+{{- if not (eq (index (split $key ".") 0) "zabbix") }}
+{{- if not (eq (index (split $key ".") 0) "jmx-exporter") }}
 {{- if eq (index (split $key "_") 0) "advertised"}}
 {{- if not (eq (index (split $key "_") 0) "sasl")}}
 {{replace $key "_" "." -1}}={{ .Value }}
@@ -98,18 +100,9 @@ advertised.listeners=PLAINTEXT://{{ $myEip }}:9092
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end }}
+{{- end }}
 socket.request.max.bytes=419430400
-
-# monitor
-external.kafka.statsd.dimension.enabled.meanRate=false
-external.kafka.statsd.dimension.enabled.median=false
-external.kafka.statsd.dimension.enabled.p99=false
-external.kafka.statsd.dimension.enabled.rate15m=fasle
-external.kafka.statsd.metrics.exclude_regex=(.*kafka\.cluster\..*)|(.*kafka\.log\.Log\.partition\..*)|(.*jvm.gc\..*)|(.*jvm\.fd_usage.*)|(.*jvm.daemon_threads\..*)|(.*jvm\.memory\.pool\..*)|(.*request\.ConsumerMetadata\..*)|(.*request\.ControlledShutdown\..*)|(.*request\.Heartbeat\..*)|(.*request\.JoinGroup\..*)|(.*request\.LeaderAndIsr\..*)|(.*request\.Metadata\..*)|(.*request\.OffsetFetch\..*)|(.*request\.Offsets\..*)|(.*request\.StopReplica\..*)|(.*request\.UpdateMetadata\..*)|(.*request\.OffsetCommit\..*)|(.*consumer\.FetchRequestAndResponseMetrics\..*)|(.*network\.RequestChannel\..*)|(.*OffsetManager\..*)|(.*FetcherStats\..*)|(.*BrokerTopicMetrics\.topic\..*)|(.*FetcherLagMetrics\.clientId\..*)|(.*DelayedFetchRequestMetrics\..*)|(.*networkProcessor\..*)|(.*FailedFetchRequestsPerSec.*)|(.*FailedProduceRequestsPerSec.*)|(.*KafkaController\.PreferredReplicaImbalanceCount.*)|(.*BytesRejectedPerSec.*)|(.*DelayedProducerRequestMetrics\..*)|(.*MinFetchRate.*)|(.*ExpiresPerSecond\..*)|(.*NumDelayedRequests.*)|(.*ControllerStats.*)|(.*FetchRequestPurgatory.*)|(.*KafkaRequestHandlerPool.*)|(.*ProducerRequestPurgatory.*)|(.*RequestQueueTimeMs.*)|(.*LocalTimeMs.*)|(.*RemoteTimeMs.*)|(.*ResponseSendTimeMs.*)|(.*NetworkProcessorAvgIdlePercent.*)|(.*kafka\.log\..*)|(.*kafka\.utils\..*)|(.*RequestMetrics\..*)|(.*kafka\.coordinator\..*)|(.*TotalFetchRequestsPerSec.*)|(.*TotalProduceRequestsPerSec.*)|(.*DelayedOperationPurgatory\..*)|(.*yammer-metrics-count)|(.*SessionExpireListener\..*)|(.*DelayedFetchMetrics\.*)
-external.kafka.statsd.metrics.prefix=
-external.kafka.statsd.port=8125
-external.kafka.statsd.reporter.enabled=true
-kafka.metrics.reporters=com.airbnb.kafka.KafkaStatsdMetricsReporter
 KAFKA_SERVER_PROPERTIES_EOF
 
 {{- end }}

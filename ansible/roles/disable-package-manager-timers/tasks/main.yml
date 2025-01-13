@@ -1,0 +1,59 @@
+---
+- name: set vars
+  set_fact:
+    os: "{{ os | d(default_os) }}"
+    osv: "{{ osv | d(default_osv) }}"
+
+- name: ubuntu
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - apt-daily.timer
+  - apt-daily.service
+  - apt-daily-upgrade.timer
+  - apt-daily-upgrade.service
+  loop_control:
+    loop_var: svc_name
+  when: os == 'ubuntu'
+
+- name: ubuntu fix apt issues
+  shell: dpkg --configure -a
+  when: os == 'ubuntu'
+
+- name: kylin - 10sp2
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - dnf-automatic-download.timer
+  - dnf-automatic-download.service
+  - dnf-automatic-install.timer
+  - dnf-automatic-install.service
+  - dnf-automatic-notifyonly.timer
+  - dnf-automatic-notifyonly.service
+  - dnf-automatic.timer
+  - dnf-automatic.service
+  - dnf-makecache.timer
+  - dnf-makecache.service
+  loop_control:
+    loop_var: svc_name
+  when:
+  - os == 'kylin'
+  - osv == '10sp2'
+
+- name: kylin - 10sp3
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - dnf-makecache.timer
+  - dnf-makecache.service
+  loop_control:
+    loop_var: svc_name
+  when:
+  - os == 'kylin'
+  - osv == '10sp3'

@@ -1,0 +1,54 @@
+---
+- name: setvariables
+  set_fact:
+    jmx_exporter_version: "{{ jmx_exporter_version | d('1.1.0') }}"
+    installPath: "/opt/jmx_exporter"
+
+- name: prepare dir
+  file:
+    path: "{{ installPath }}/{{ jmx_exporter_version }}"
+    state: directory
+
+- name: link for current
+  file:
+    src: "{{ installPath }}/{{ jmx_exporter_version }}"
+    dest: "{{ installPath }}/current"
+    state: link
+
+- include_role:
+    name: downloader
+  vars:
+    opts:
+      pkg_name: jmx_prometheus
+      pkg_version: "{{ jmx_exporter_version }}"
+      pkg_feature: "standalone-noarch"
+      pkg_fileType: ".jar"
+      pkg_url: "https://github.com/prometheus/jmx_exporter/releases/download/{{ jmx_exporter_version }}/jmx_prometheus_standalone-{{ jmx_exporter_version }}.jar"
+
+- name: copy jar files
+  copy:
+    src: "{{ downloaded }}"
+    dest: "{{ installPath }}/current/jmx_prometheus_standalone.jar"
+
+- name: copy conf files
+  copy:
+    src: files/{{ item }}
+    dest: /{{ item }}
+    directory_mode: yes
+  with_items:
+    - lib/systemd/system/
+    - opt/app/conf/jmx-exporter/
+
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - jmx-exporter
+  loop_control:
+    loop_var: svc_name
+
+- name: install confd files
+  include_role:
+    name: confd-files

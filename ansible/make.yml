@@ -4,19 +4,26 @@
   strategy: free
   vars:
     target_env: "{{ lookup('env', 'target') }}"
-    local_cache_path: "~/.ansible/cache"
   tasks:
   - include_role:
       name: "{{ service_name }}"
     loop:
-    - disable-apt-jobs
+    - tar
+    - nc
+    - disable-package-manager-timers
     - disable-motd
     - app-agent
     - appctl
     - arping
+    - openjdk
     - caddy
     - kafka
+    - unzip
     - kafka-manager
     - zabbix-agent
+    - jmx-exporter
+    - users_groups
+    - crashkernel
+    - pwquality
     loop_control:
       loop_var: service_name

@@ -1,0 +1,48 @@
+---
+- name: set vars
+  set_fact:
+    openjdk_version: "{{ openjdk_version | d('21.0.2') }}"
+    arch: "{{ arch | d(default_arch) }}"
+    installPath: "/opt/openjdk"
+
+- name: set up cpu for amd64
+  set_fact:
+    cpu: "x64"
+  when: arch == 'amd64'
+
+# will set var downloaded
+- include_role:
+    name: downloader
+  vars:
+    opts:
+      pkg_name: openjdk
+      pkg_version: "{{ openjdk_version }}"
+      pkg_feature: "linux-{{ arch }}"
+      pkg_fileType: ".tgz"
+      pkg_url: "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-{{ openjdk_version }}_linux-{{ cpu }}_bin.tar.gz"
+
+- name: prepare dir
+  file:
+    path: "{{ installPath }}/{{ openjdk_version }}"
+    state: directory
+
+- name: link for current
+  file:
+    src: "{{ installPath }}/{{ openjdk_version }}"
+    dest: "{{ installPath }}/current"
+    state: link
+
+- name: decompress file
+  unarchive:
+    src: "{{ downloaded }}"
+    dest: "{{ installPath }}/current"
+    creates: "{{ installPath }}/current/bin/java"
+    extra_opts:
+    - --strip-components=1
+
+- name: add env
+  copy:
+    dest: /etc/profile.d/openjdk.sh
+    content: |
+      JAVA_HOME={{ installPath }}/current
+      PATH=$JAVA_HOME/bin:$PATH

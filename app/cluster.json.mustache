@@ -7,14 +7,18 @@
   },
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
+    "appv-bj0t2o9z",
+    "appv-3fyiby2j",
+    "appv-ijbugse5",
+    "appv-3w7cnjir"
   ],
-  "upgrading_policy": "parallel",
+  "upgrading_policy": "sequential",
   "nodes": [{
     "role":"kafka",
     "container": {
-      "type": "lxc",
-      "zone": "ap2a",
-      "image": "img-3awxw5qk"
+      "type": "kvm",
+      "zone": "pek3",
+      "image": "img-giiip16i"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -36,6 +40,19 @@
       },
       "restart": {
         "cmd": "sleep 10; appctl restart"
+      },
+      "upgrade": {
+        "post_start_service": true,
+        "cmd": "appctl upgrade",
+        "timeout": 43200
+      },
+      "post_upgrade_restart": {
+        "type": "custom",
+        "cmd": "appctl postUpgradeRestart",
+        "timeout": 43200,
+        "service_params": {
+          "rollingType": {{service_params.rollingType}}
+        }
       }
     },
     "advanced_actions": ["change_vxnet", "scale_horizontal", "associate_eip"],
@@ -52,7 +69,7 @@
     },
     "monitor": {
       "enable": true,
-      "cmd": "appctl measure",
+      "cmd": "appctl measure2",
       "items": {
         "heap_usage": {
           "unit": "%"
@@ -94,8 +111,8 @@
     "user_access": true,
     "container": {
       "type": "kvm",
-      "zone": "ap2a",
-      "image": "img-3awxw5qk"
+      "zone": "pek3",
+      "image": "img-giiip16i"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
@@ -169,7 +186,9 @@
     "kafka-manager.basicAuthentication.username": {{env.kafka-manager.basicAuthentication.username}},
     "kafka-manager.basicAuthentication.password": {{env.kafka-manager.basicAuthentication.password}},
     "kafka-manager.port": {{env.kafka-manager.port}},
-    "kafka.scala.version": {{env.kafka.scala.version}}
+    "jmx-exporter.enable": {{env.jmx-exporter.enable}},
+    "jmx-exporter.port": {{env.jmx-exporter.port}},
+    "jmx-exporter.conf": {{env.jmx-exporter.conf}}
   },
   "endpoints": {
     "client": {
@@ -183,10 +202,6 @@
     "jmx": {
       "port": 9999,
       "protocol": "tcp"
-    },
-    "monitor": {
-      "port": 8125,
-      "protocol": "udp"
     }
   }
 }

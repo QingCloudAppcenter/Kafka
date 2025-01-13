@@ -39,7 +39,7 @@ checkRole() {
 #func0
 # 列出所有的topic
 listAllTopic() {
-  /opt/kafka/current/bin/kafka-topics.sh --list --zookeeper ${zookeeperList}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-topics.sh --list --bootstrap-server ${brokerList}
 }
 
 
@@ -50,8 +50,8 @@ createTopic() {
   echo "please input as required: (Use spaces to differentiate )"
   read -p "topic name:  num of replication:   num of partitions:  "  topicName  replicationFactor partitionsNum
 
-/opt/kafka/current/bin/kafka-topics.sh    --create \
-                                          --zookeeper ${zookeeperList} \
+JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-topics.sh    --create \
+                                          --bootstrap-server ${brokerList} \
                                           --replication-factor ${replicationFactor:-1} \
                                           --partitions ${partitionsNum:-3} \
                                           --topic ${topicName:-test}
@@ -63,8 +63,8 @@ createTopic() {
 deleteTopic() {
   local topicName
   read -p "please input the topic name which you want to delete: "     topicName 
-  /opt/kafka/current/bin/kafka-topics.sh  --delete \
-                                          --zookeeper ${zookeeperList} \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-topics.sh  --delete \
+                                          --bootstrap-server ${brokerList} \
                                           --topic ${topicName}
 }
 
@@ -76,7 +76,7 @@ describeTopic() {
   local topicName
   echo "note : all topic are displayed by default, but it will only output the specified topic if you input the topic name ";
   read -p "please input the target topic name: " topicName
-  /opt/kafka/current/bin/kafka-topics.sh  --zookeeper ${zookeeperList} --describe  `if [[ $topicName ]]; then echo --topic ${topicName}; fi`
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-topics.sh  --bootstrap-server ${brokerList} --describe  `if [[ $topicName ]]; then echo --topic ${topicName}; fi`
 }
 
 
@@ -85,7 +85,7 @@ describeTopic() {
 consoleProducer() {
   local topicName
   read -p "please input the target topic name: " topicName
-  /opt/kafka/current/bin/kafka-console-producer.sh --broker-list ${brokerList} --topic ${topicName} \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-console-producer.sh --broker-list ${brokerList} --topic ${topicName} \
                         `if [[ $SASL = "true" ]]; then echo --producer.config /ssl/kafka.config; fi`
 }
 
@@ -100,7 +100,7 @@ consoleConsumer() {
   read -p "--offset <consume offset>  "           offsetsNum
   read -p "--partition  "                         partitionsNum
   read -p "--topic "                              topicName
-  /opt/kafka/current/bin/kafka-console-consumer.sh --bootstrap-server ${brokerList} \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-console-consumer.sh --bootstrap-server ${brokerList} \
                         `if [[ "${isConsumeFromBeginning}" = "1" ]]; then echo --from-beginning; fi` \
                         `if [[ $consumerGroup ]]; then echo --group ${consumerGroup}; fi` \
                         `if [[ $maxMeassagesNum ]]; then echo --max-messages ${maxMeassagesNum}; fi` \
@@ -115,7 +115,7 @@ consoleConsumer() {
 #func6
 # 平衡分区
 performPreferredReplicaElection() {
-  /opt/kafka/current/bin/kafka-preferred-replica-election.sh --zookeeper ${zookeeperList}
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-preferred-replica-election.sh --bootstrap-server ${brokerList}
 }
 
 
@@ -136,16 +136,16 @@ consumerGroupManager() {
 }
 
 listAllConsumerGroup() {
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --list \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --list \
                         `if [[ $SASL = "true" ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
 describeConsumergroup() {
   local consumerGroup
   read -p "input the group you want to describe: " consumerGroup
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} \
                         `if [[ $SASL = "true" = "true" ]]; then echo --consumer.config /ssl/kafka.config; fi`
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} --state  \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --describe --group ${consumerGroup} --state  \
                         `if [[ $SASL = "true" ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
@@ -155,7 +155,7 @@ deleteConsumerGroupInfo() {
   read -p "input the group you want to delete: " consumerGroup
   echo "please confirm the group you want to delete is " ${consumerGroup} 
   read -p "current mode : dry run ; executing only when you input yes : " confirmFlag
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --delete --group ${consumerGroup}  `if [[ "${confirmFlag}" == "yes" ]]; then echo --execute; else echo --dry-run; fi` \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-consumer-groups.sh --bootstrap-server ${brokerList} --delete --group ${consumerGroup}  `if [[ "${confirmFlag}" == "yes" ]]; then echo --execute; else echo --dry-run; fi` \
                         `if [[ $SASL = "true" ]]; then echo --consumer.config /ssl/kafka.config; fi`
 }
 
@@ -170,7 +170,7 @@ resetOffset() {
   read -p "--to-datetime(Format: 'YYYY-MM-DDTHH:mm:SS.sss')  "  offsetsDate
   read -p "current mode : dry run ; executing only when you input yes : " confirmFlag
   
-  /opt/kafka/current/bin/kafka-consumer-groups.sh --reset-offsets \
+  JAVA_HOME=/opt/openjdk/current /opt/kafka/current/bin/kafka-consumer-groups.sh --reset-offsets \
                                                   --bootstrap-server ${brokerList} \
                                                   `if [[ "${confirmFlag}" == "yes" ]]; then echo --execute; else echo --dry-run; fi` \
                                                   `if [[ ${consumerGroup} ]]; then echo --group ${consumerGroup}; fi` \
@@ -209,8 +209,8 @@ switch2func() {
   3) checkRole ALL && describeTopic ;;
   4) checkRole ALL && consoleProducer ;;
   5) checkRole ALL && consoleConsumer ;;
-  6) checkRole ALL && performPreferredReplicaElection ;;
-  7) checkRole ALL && consumerGroupManager ;;
+  6) checkRole ALL && func8 ;;
+  7) checkRole ALL && func8 ;;
   8) checkRole kafka && func8 ;;   #ALL means this func should be works well in all node
   9) checkRole kafka-manager && func9 ;;
   *) echo "wrong input! please retry" ;;
@@ -222,7 +222,7 @@ displayMenu() {
   echo "    0    list all topic             1    create new topic       ";
   echo "    2    delete topic               3    get topic's detail     ";
   echo "    4    console producer           5    console consumer       ";
-  echo "    6    rebalance replica          7    consumer group manager ";
+  echo "    6    not avaliable now          7    not avaliable now      ";
   echo "    8    not avaliable now          9    not avaliable now      ";
   echo "    m/M  redisplay menu             q/Q  exit                   ";
   echo "****************************************************************";

@@ -3,11 +3,26 @@ ln -s -f /opt/app/conf/caddy/index.html ${DATA_MOUNTS}/index.html
 {{- $myRole := index $roleMap (getv "/host/role") }}
 {{- $myIp := getv "/host/ip" }}
 flush > /opt/app/conf/caddy/caddyfile << CADDYFILE_EOF
+{
+        admin off
+        auto_https off
+        persist_config off
+        log {
+                output stdout
+        }
+}
 {{ $myIp }}:80 {
-  root /data
-  gzip
-  browse /log
-  tls off
+        vars {
+                rootDir "/data"
+        }
+
+        root {vars.rootDir}
+
+        handle /log* {
+                file_server browse
+        }
+
+        file_server
 }
 CADDYFILE_EOF
 
