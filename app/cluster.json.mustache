@@ -7,18 +7,14 @@
   },
   "multi_zone_policy": "round_robin",
   "upgrade_policy": [
-    "appv-bj0t2o9z",
-    "appv-3fyiby2j",
-    "appv-ijbugse5",
-    "appv-3w7cnjir"
   ],
   "upgrading_policy": "sequential",
   "nodes": [{
     "role":"kafka",
     "container": {
       "type": "kvm",
-      "zone": "pek3",
-      "image": "img-giiip16i"
+      "zone": "pekt3",
+      "image": "img-lmo9uxln"
     },
     "instance_class": {{cluster.kafka.instance_class}},
     "count": {{cluster.kafka.count}},
@@ -111,8 +107,8 @@
     "user_access": true,
     "container": {
       "type": "kvm",
-      "zone": "pek3",
-      "image": "img-giiip16i"
+      "zone": "pekt3",
+      "image": "img-lmo9uxln"
     },
     "instance_class": {{cluster.client.instance_class}},
     "count": {{cluster.client.count}},
