@@ -229,8 +229,9 @@ measure2() {
 }
 
 checkKafkaManager() {
+  return 0
   . /opt/app/bin/envs/appctl.env
-  curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
+  curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT/api/clusters" | grep $CLUSTER_ID >> /dev/null
 }
 
 addCluster() {

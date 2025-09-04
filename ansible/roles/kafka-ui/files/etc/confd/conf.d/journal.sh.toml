@@ -1,0 +1,8 @@
+[template]
+src = "journal.sh.tmpl"
+dest = "/opt/app/bin/tmpl/journal.sh"
+mode = "0700"
+keys = [
+  "/",
+]
+reload_cmd = "/opt/app/bin/tmpl/journal.sh; systemctl restart rsyslog"

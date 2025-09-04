@@ -1,0 +1,67 @@
+{{- $roleMap := map "kafka" "kafka" "client" "kafka-manager" }}
+{{- $myRole := index $roleMap (getv "/host/role") }}
+{{- $myIp := getv "/host/ip" }}
+{{- $zkPort := getv "/links/zk_service/cluster/endpoints/client/port" "2181" }}
+
+{{- $SASLType := getv "/env/sasl_type" }}
+
+{{- if eq $myRole "kafka-manager" }}
+
+encrypted=$(echo -n {{ getv "/cluster/cluster_id" }}{{ getv "/cluster/user_id" }} | sha256sum | base64)
+
+flush > /opt/app/conf/kafka-ui/static_config.yaml << APP_CONF_EOF
+kafka:
+  clusters:
+  - bootstrapServers: "{{ range $i, $p := getvs "/hosts/kafka/*/ip" }}
+    {{- if $i }},{{ end }}
+    {{- . }}:9092
+    {{- end }}"
+    consumerProperties: {}
+    kafkaConnect: []
+    masking: []
+    name: {{ getv "/cluster/cluster_id" }}
+    producerProperties: {}
+{{- if eq $SASLType "NONE" }}
+    properties: {}
+{{- else if eq $SASLType "SASL-PLAINTEXT" }}
+    properties:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="{{ getv "/env/sasl_username"}}" password="{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}";
+{{- else if or (eq $SASLType "SCRAM-SHA-256") (eq $SASLType "SCRAM-SHA-512") }}
+    properties:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: {{ $SASLType }}
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required
+        username="{{ getv "/env/sasl_username"}}" password="{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}";
+{{- else }}
+    properties: {}
+{{- end }}
+    readOnly: false
+    serde: []
+rbac:
+  roles: []
+webclient: {}
+server:
+  port: {{ getv "/env/kafka-manager.port" "9000" }}
+{{- if eq (getv "/env/kafka-manager.basicAuthentication.enabled") "true" }}
+auth:
+  type: LOGIN_FORM
+
+spring:
+  security:
+    user:
+      name: "{{ getv "/env/kafka-manager.basicAuthentication.username"}}"
+      password: "{{ replace (getv "/env/kafka-manager.basicAuthentication.password" "password") `$` `\$` -1 }}"
+{{- end }}
+logging:
+  level:
+    root: INFO
+    io.kafbat.ui: INFO
+    reactor.netty.http.server.AccessLog: INFO
+    org.hibernate.validator: WARN
+
+APP_CONF_EOF
+
+{{- end }}

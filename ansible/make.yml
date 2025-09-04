@@ -19,7 +19,7 @@
     - caddy
     - kafka
     - unzip
-    - kafka-manager
+    - kafka-ui
     - zabbix-agent
     - jmx-exporter
     - users_groups
