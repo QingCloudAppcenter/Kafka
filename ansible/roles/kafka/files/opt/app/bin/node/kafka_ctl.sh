@@ -371,9 +371,9 @@ upgrade() {
 }
 
 # check inter.broker.protocol.version
-# current IBPV is 3.8
-# $1 count of 3.8
-CURRENT_IBPV="3.8"
+# current IBPV is 3.9
+# $1 count of 3.9
+CURRENT_IBPV="3.9"
 checkCurrentIBPV() {
   if [ "$1" -eq 0 ]; then
     log "INFO: first nodes, skip the check"
