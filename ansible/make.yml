@@ -10,6 +10,7 @@
     loop:
     - tar
     - nc
+    - os-update
     - disable-package-manager-timers
     - disable-motd
     - app-agent
