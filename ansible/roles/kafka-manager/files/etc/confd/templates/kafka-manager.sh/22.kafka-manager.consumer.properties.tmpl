@@ -7,22 +7,22 @@ flush > /opt/app/conf/kafka-manager/consumer.properties << CONSUMER_PROP_EOF
 {{- if eq $SASLType "SSL" }}
 security.protocol=SSL
 ssl.truststore.location=/ssl/kafka.client.truststore.jks
-ssl.truststore.password={{ getv "/env/sasl_password" }}
-ssl.keystore.password={{ getv "/env/sasl_password" }}
+ssl.truststore.password='{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}'
+ssl.keystore.password='{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}'
 ssl.keystore.location=/ssl/kafka.client.keystore.jks
 ssl.endpoint.identification.algorithm=
 {{- else if eq $SASLType "SCRAM-SHA-512" }}
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=SCRAM-SHA-512
-sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}";
 {{- else if eq $SASLType "SCRAM-SHA-256" }}
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=SCRAM-SHA-256
-sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}";
 {{- else if eq $SASLType "SASL-PLAINTEXT" }}
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=PLAIN
-sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ getv "/env/sasl_password"}}";
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ getv "/env/sasl_username"}}" password="{{ replace (getv "/env/sasl_password") `$` `\$` -1 }}";
 {{- else }}
 security.protocol=PLAINTEXT
 {{- end }}

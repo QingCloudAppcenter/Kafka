@@ -1,0 +1,19 @@
+[Unit]
+Description=Kafka UI
+Documentation=https://ui.docs.kafbat.io/
+Requires=network.target
+After=network.target
+
+[Service]
+RuntimeDirectory=kafka-ui
+PrivateTmp=true
+Type=simple
+User=kafka
+Group=kafka
+LimitNOFILE=500000
+EnvironmentFile=/opt/app/conf/kafka-ui/.env
+ExecStart=/opt/openjdk/current/bin/java $KAFKA_UI_OPTS -jar /opt/kafka-ui/current/api.jar
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

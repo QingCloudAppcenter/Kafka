@@ -1,0 +1,78 @@
+---
+- name: setvariables
+  set_fact:
+    kafka_ui_version: "{{ kafka_ui_version | d('v1.3.0') }}"
+    installPath: "/opt/kafka-ui"
+
+- name: install confd files
+  include_role:
+    name: confd-files
+
+- name: copy binaries
+  copy: #拷贝service文件
+    src: files/opt/
+    dest: /opt
+    owner: root
+    group: kafka
+    mode: preserve
+    directory_mode: u=rwx,g=rx,o=
+
+- name: copy systemd files
+  copy: #拷贝service文件
+    src: files/{{ item }}
+    dest: /{{ item }}
+    directory_mode: yes
+  with_items:
+    - lib/systemd/system/
+
+- name: disable auto start
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - kafka-ui
+  loop_control:
+    loop_var: svc_name
+
+- name: prepare dir
+  file:
+    path: "{{ installPath }}/{{ kafka_ui_version }}"
+    state: directory
+
+- name: link for current
+  file:
+    src: "{{ installPath }}/{{ kafka_ui_version }}"
+    dest: "{{ installPath }}/current"
+    state: link
+
+- include_role:
+    name: downloader
+  vars:
+    opts:
+      pkg_name: kafka-ui
+      pkg_version: "{{ kafka_ui_version }}"
+      pkg_feature: "noarch"
+      pkg_fileType: ".jar"
+      pkg_url: "https://github.com/kafbat/kafka-ui/releases/download/{{ kafka_ui_version }}/api-{{ kafka_ui_version }}.jar"
+
+- name: copy jar files
+  copy:
+      src: "{{ downloaded }}"
+      dest: "{{ installPath }}/current/api.jar"
+
+- name: update permissions of service directories
+  file:
+    path: /opt/{{ item }}
+    owner: kafka
+    group: kafka
+    recurse: yes
+    state: directory
+  with_items:
+    - kafka-ui
+
+- name: setup journald.conf
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    line: 'ForwardToSyslog=no'
+    state: present

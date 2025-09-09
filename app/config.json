@@ -182,6 +182,7 @@
                 "values": ["SASL-PLAINTEXT", "SCRAM-SHA-256", "SCRAM-SHA-512"],
                 "operator": "in"
             }],
+            "pattern": "^([a-zA-Z0-9_@.-]{3,})$",
             "default": "admin",
             "changeable": true,
             "required": "yes"
@@ -195,7 +196,7 @@
                 "values": ["SASL-PLAINTEXT", "SCRAM-SHA-256", "SCRAM-SHA-512", "SSL"],
                 "operator": "in"
             }],
-            "pattern": "^([^']{6,})$",
+            "pattern": "^([a-zA-Z0-9_!@$%^&*()./;]{6,})$",
             "default": "password",
             "changeable": true,
             "required": "yes"
@@ -401,6 +402,7 @@
             "label": "kafka-manager.basicAuthentication.username",
             "description": "This is the username that log in kafka-manager",
             "type": "string",
+            "pattern": "^([a-zA-Z0-9_@.-]{3,})$",
             "default": "admin",
             "required": "yes"
         }, {
@@ -410,7 +412,7 @@
             "type": "password",
             "changeable": true,
             "default": "password",
-            "pattern": "^([a-zA-Z0-9_!#%^&*()./;]{6,}|)$",
+            "pattern": "^([a-zA-Z0-9_!@$%^&*()./;]{6,}|)$",
             "required": "yes"
         }, {
             "key": "kafka-manager.port",

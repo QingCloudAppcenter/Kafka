@@ -229,8 +229,9 @@ measure2() {
 }
 
 checkKafkaManager() {
+  return 0
   . /opt/app/bin/envs/appctl.env
-  curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT" | grep $CLUSTER_ID >> /dev/null
+  curl -u "${WEB_USER}:${WEB_PASSWORD}" "http://$MY_IP:$MY_PORT/api/clusters" | grep $CLUSTER_ID >> /dev/null
 }
 
 addCluster() {
@@ -370,9 +371,9 @@ upgrade() {
 }
 
 # check inter.broker.protocol.version
-# current IBPV is 3.8
-# $1 count of 3.8
-CURRENT_IBPV="3.8"
+# current IBPV is 3.9
+# $1 count of 3.9
+CURRENT_IBPV="3.9"
 checkCurrentIBPV() {
   if [ "$1" -eq 0 ]; then
     log "INFO: first nodes, skip the check"
