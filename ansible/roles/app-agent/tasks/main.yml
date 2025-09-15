@@ -30,11 +30,11 @@
     extra_opts:
     - --strip-components=1
 
-- name: hack for kylin
+- name: hack for kylin/openEuler
   lineinfile:
     path: "{{ tmpPath }}/install.sh"
     regexp: "'fedora'"
-    line: "elif echo \"$os\" | grep '[fedora|kylin]' > /dev/null; then"
+    line: "elif echo \"$os\" | grep '[fedora|kylin|openEuler]' > /dev/null; then"
 
 - name: install app-agent
   shell:
@@ -75,4 +75,4 @@
       path: "{{ confd_path }}"
       regexp: 'rm -f \$LOCKFILE.*'
       replace: 'rm -f $LOCKFILE && rm -f $PIDFILE'
-  when: os == 'kylin'
+  when: os == 'kylin' or os == 'openEuler'

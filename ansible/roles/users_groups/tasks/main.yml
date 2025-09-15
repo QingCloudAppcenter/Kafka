@@ -3,18 +3,18 @@
   set_fact:
     os: "{{ os | d(default_os) }}"
 
-- name: syslog group
-  group:
-    name: syslog
-    state: present
-  when: os == 'kylin'
-
-- name: syslog user
-  user:
-    name: syslog
-    groups: syslog
-    system: yes
-    state: present
-    create_home: no
-    shell: /usr/sbin/nologin
-  when: os == 'kylin'
+- name: kylin/openEuler block
+  block:
+  - name: syslog group
+    group:
+      name: syslog
+      state: present
+  - name: syslog user
+    user:
+      name: syslog
+      groups: syslog
+      system: yes
+      state: present
+      create_home: no
+      shell: /usr/sbin/nologin
+  when: os == 'kylin' or os == 'openEuler'

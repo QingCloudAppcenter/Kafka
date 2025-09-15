@@ -1,19 +1,12 @@
 mkdir -p ${DATA_MOUNTS}/log/journald/
 currentOs=$(sed -n '/^ID=/p' /etc/os-release | sed 's/^ID=//' | sed 's/"//g')
-if [ "$currentOs" = "kylin" ]; then
+if [ "$currentOs" = "kylin" ]  || [ "$currentOs" = "openEuler" ]; then
   chmod 755 ${DATA_MOUNTS}/log/journald/
 else
   chown syslog:syslog ${DATA_MOUNTS}/log/journald/
   chmod 755 ${DATA_MOUNTS}/log/journald/
 fi
 flush /etc/rsyslog.d/49-journald.conf << JOURNALD_CONFIG_EOF
-module(load="imjournal" PersistStateInterval="100") #load imjournal module
-module(load="mmjsonparse") #load mmjsonparse module for structured logs
-
-#template(name="CEETemplate" type="string" string="%TIMESTAMP% %HOSTNAME% %syslogtag% @cee: %$!all-json%\n" ) #template for messages
-
-#action(type="mmjsonparse")
-#action(type="omfile" file="${DATA_MOUNTS}/log/journald/journald.log" template="CEETemplate")
 action(type="omfile" file="${DATA_MOUNTS}/log/journald/journald.log")
 
 JOURNALD_CONFIG_EOF

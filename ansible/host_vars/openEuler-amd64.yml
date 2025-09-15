@@ -1,0 +1,3 @@
+default_os: openEuler
+default_osv: "24.03"
+default_arch: amd64
