@@ -3,7 +3,6 @@
   set_fact:
     zabbix_version: "{{ zabbix_version | d('7.2') }}"
     os: "{{ os | d(default_os) }}"
-    osv: "{{ osv | d(default_osv) }}"
 
 - name: install confd files
   include_role:
@@ -51,6 +50,11 @@
     centos_version: '8'
   when: os == 'kylin'
 
+- name: set centos version
+  set_fact:
+    centos_version: '9'
+  when: os == 'openEuler'
+
 - include_role:
     name: downloader
   vars:
@@ -60,38 +64,38 @@
       pkg_feature: "linux"
       pkg_fileType: ".rpm"
       pkg_url: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/release/centos/{{ centos_version }}/noarch/zabbix-release-latest-{{ zabbix_version }}.el{{ centos_version }}.noarch.rpm"
-  when: os == 'kylin'
+  when: os == 'kylin' or os == 'openEuler'
 
 - name: copy file
   copy:
     src: "{{ downloaded }}"
     dest: "/tmp"
 
-- name: install repo - ubuntu
-  apt:
-    deb: "/tmp/{{ downloaded | basename }}"
-    policy_rc_d: 101
-    state: present
+- name: ubuntu block
+  block:
+  - name: install repo - ubuntu
+    apt:
+      deb: "/tmp/{{ downloaded | basename }}"
+      policy_rc_d: 101
+      state: present
+  - name: install agent - ubuntu
+    apt:
+      name: zabbix-agent
+      state: present
   when: os == 'ubuntu'
 
-- name: install agent - ubuntu
-  apt:
-    name: zabbix-agent
-    state: present
-  when: os == 'ubuntu'
-
-- name: install repo - kylin
-  dnf:
-    name: "/tmp/{{ downloaded | basename }}"
-    disable_gpg_check: true
-    state: present
-  when: os == 'kylin'
-
-- name: install agent - kylin
-  dnf:
-    name: zabbix-agent
-    state: present
-  when: os == 'kylin'
+- name: kylin/openEuler block
+  block:
+  - name: install repo
+    dnf:
+      name: "/tmp/{{ downloaded | basename }}"
+      disable_gpg_check: true
+      state: present
+  - name: install agent
+    dnf:
+      name: zabbix-agent
+      state: present
+  when: os == 'kylin' or os == 'openEuler'
 
 - name: mask service
   systemd:

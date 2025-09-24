@@ -8,4 +8,4 @@
     path: /etc/security/pwquality.conf
     line: 'minclass = 2'
     state: present
-  when: os == 'kylin'
+  when: os == 'kylin' or os == 'openEuler'

@@ -32,4 +32,4 @@
     name: "*"
     state: latest
     update_cache: yes
-  when: os == 'kylin'
+  when: os == 'kylin' or os == 'openEuler'

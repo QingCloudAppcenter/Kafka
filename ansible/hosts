@@ -1,3 +1,4 @@
-ubuntu-amd64 ansible_host=yourip
-kylin-arm64 ansible_host=youip ansible_port=30023
-kylin-amd64 ansible_host=youip ansible_port=30024
+#ubuntu-amd64 ansible_host=yourip
+#kylin-arm64 ansible_host=youip ansible_port=30023
+#kylin-amd64 ansible_host=youip ansible_port=30032
+openEuler-amd64 ansible_host=youip ansible_port=30033
