@@ -57,3 +57,15 @@
   when:
   - os == 'kylin'
   - osv == '10sp3'
+
+- name: openEuler
+  systemd:
+    name: "{{ svc_name }}"
+    state: stopped
+    masked: yes
+  loop:
+  - dnf-makecache.timer
+  - dnf-makecache.service
+  loop_control:
+    loop_var: svc_name
+  when: os == 'openEuler'

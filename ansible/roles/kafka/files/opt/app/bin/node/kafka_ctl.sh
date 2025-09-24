@@ -28,6 +28,7 @@ initNode() {
 upgradeInit() {
   _initNode
   mkdir -p ${DATA_MOUNTS}/log/zabbix/logs ${DATA_MOUNTS}/log/$MY_ROLE/{dump,logs} ${DATA_MOUNTS}/$MY_ROLE/dump
+  chmod 755 ${DATA_MOUNTS}/log # kylin: sometimes 700
   chown -R syslog:adm ${DATA_MOUNTS}/log/appctl
   chown syslog:syslog ${DATA_MOUNTS}/log/journald/*
   chown -R kafka:kafka ${DATA_MOUNTS}/$MY_ROLE
