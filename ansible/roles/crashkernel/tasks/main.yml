@@ -11,8 +11,7 @@
       replace: ''
   - name: update GRUB for efi
     command:
-      grub2-mkconfig -o /boot/efi/EFI/kylin/grub.cfg
-    when: os == 'kylin'
+      grub2-mkconfig -o /boot/efi/EFI/{{ os }}/grub.cfg
   - name: update GRUB for bios
     command:
       grub2-mkconfig -o /boot/grub2/grub.cfg

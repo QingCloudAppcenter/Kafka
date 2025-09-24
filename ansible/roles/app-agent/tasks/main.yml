@@ -34,7 +34,7 @@
   lineinfile:
     path: "{{ tmpPath }}/install.sh"
     regexp: "'fedora'"
-    line: "elif echo \"$os\" | grep '[fedora|kylin|openEuler]' > /dev/null; then"
+    line: "elif echo \"$os\" | grep '[fedora|kylin|openEuler|PrimusOS]' > /dev/null; then"
 
 - name: install app-agent
   shell:
